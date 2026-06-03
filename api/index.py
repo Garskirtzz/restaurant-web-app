@@ -7,7 +7,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from server.app import RestaurantHandler, init_db  # noqa: E402
+from server.app import RestaurantHandler, ensure_db_initialized  # noqa: E402
 
 
 class handler(RestaurantHandler):
@@ -25,7 +25,7 @@ class handler(RestaurantHandler):
             self.path = normalized_path + (f"?{query_string}" if query_string else "")
 
     def handle_api_request(self, method):
-        init_db()
+        ensure_db_initialized()
         self.normalize_vercel_api_path()
         self.handle_api(method)
 

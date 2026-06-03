@@ -10,6 +10,7 @@ import os
 import re
 import secrets
 import sqlite3
+import threading
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 
@@ -70,6 +71,8 @@ MAX_JSON_BODY_BYTES = positive_int_env("RESTAURANT_MAX_JSON_BODY_BYTES", 128 * 1
 ALLOWED_ORIGINS = csv_env("RESTAURANT_ALLOWED_ORIGINS", "*")
 APP_VERSION = os.environ.get("RESTAURANT_APP_VERSION", "local")
 SCHEMA_VERSION = 2
+DB_INITIALIZED = False
+DB_INIT_LOCK = threading.Lock()
 
 
 DEFAULT_CUSTOMERS = [
@@ -596,6 +599,27 @@ def is_integrity_error(error):
     return error_name in {"IntegrityError", "UniqueViolation"}
 
 
+def postgres_bootstrap_ready(db):
+    if not is_postgres_db(db):
+        return False
+
+    try:
+        migration = db.execute("SELECT MAX(version) AS version FROM schema_migrations").fetchone()
+        settings = db.execute("SELECT id FROM restaurant_settings WHERE id = 1").fetchone()
+        menu_count = db.execute("SELECT COUNT(*) AS total FROM menu_items").fetchone()["total"]
+        table_count = db.execute("SELECT COUNT(*) AS total FROM restaurant_tables").fetchone()["total"]
+    except Exception:
+        return False
+
+    return bool(
+        migration
+        and (migration["version"] or 0) >= SCHEMA_VERSION
+        and settings
+        and menu_count >= len(DEFAULT_MENU)
+        and table_count >= len(DEFAULT_TABLES)
+    )
+
+
 def migrate_schema(db):
     ensure_column(db, "sessions", "expires_at", "TEXT")
     db.execute(
@@ -643,6 +667,9 @@ def init_db():
         DB_PATH.parent.mkdir(parents=True, exist_ok=True)
 
     with connect_db() as db:
+        if postgres_bootstrap_ready(db):
+            return
+
         if USE_POSTGRES:
             db.executescript(POSTGRES_SCHEMA_SQL)
         else:
@@ -779,6 +806,20 @@ def init_db():
                 """,
                 (utc_now(),),
             )
+
+
+def ensure_db_initialized():
+    global DB_INITIALIZED
+
+    if DB_INITIALIZED:
+        return
+
+    with DB_INIT_LOCK:
+        if DB_INITIALIZED:
+            return
+
+        init_db()
+        DB_INITIALIZED = True
 
 
 def seed_user(db, username, password, name, role, email="", phone="", address="", force_password=False):
@@ -1650,7 +1691,7 @@ class RestaurantHandler(BaseHTTPRequestHandler):
 
 
 def run_server(host, port):
-    init_db()
+    ensure_db_initialized()
     server = ThreadingHTTPServer((host, port), RestaurantHandler)
     print(f"Local API running at http://{host}:{port}")
     print(f"Frontend: http://{host}:{port}/index.html")
