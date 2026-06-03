@@ -84,6 +84,26 @@
         return /^meja\s+/i.test(text) ? text : `Meja ${text}`;
     }
 
+    // CSP-friendly event delegation: replaces inline on* handlers.
+    // Walks up from the event target to the nearest [data-action] element and
+    // invokes the matching handler. Because only the nearest match runs, nested
+    // actions (e.g. a button inside a clickable card) work without stopPropagation.
+    function delegateActions(root, handlers, eventType) {
+        root.addEventListener(eventType || 'click', function (event) {
+            const trigger = event.target.closest('[data-action]');
+
+            if (!trigger || !root.contains(trigger)) {
+                return;
+            }
+
+            const handler = handlers[trigger.dataset.action];
+
+            if (typeof handler === 'function') {
+                handler(trigger, event);
+            }
+        });
+    }
+
     window.RestaurantUtils = {
         escapeHTML,
         encodeKey,
@@ -95,6 +115,7 @@
         writeArrayToStorage,
         getOrderId,
         normalizeTableKey,
-        formatTableNumber
+        formatTableNumber,
+        delegateActions
     };
 })();

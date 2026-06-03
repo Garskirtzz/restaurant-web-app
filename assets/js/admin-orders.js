@@ -119,10 +119,10 @@
             const orderId = getOrderId(order);
             const encodedOrderId = encodeKey(orderId);
             const processButton = isIncomingOrder(order)
-                ? `<button class="action-btn" title="Proses pesanan" onclick="processOrderFromTable('${encodedOrderId}')">Proses</button>`
+                ? `<button class="action-btn" title="Proses pesanan" data-action="processOrderFromTable" data-key="${encodedOrderId}">Proses</button>`
                 : '';
             const completeButton = isProcessingOrder(order)
-                ? `<button class="action-btn" title="Selesaikan" onclick="completeOrderFromTable('${encodedOrderId}')">Selesai</button>`
+                ? `<button class="action-btn" title="Selesaikan" data-action="completeOrderFromTable" data-key="${encodedOrderId}">Selesai</button>`
                 : '';
 
             row.innerHTML = `
@@ -133,7 +133,7 @@
                 <td>${escapeHTML(formatCurrency(order.total))}</td>
                 <td><span class="status ${escapeHTML(order.status || 'pending')}">${escapeHTML(getStatusText(order.status))}</span></td>
                 <td>
-                    <button class="action-btn" title="Lihat detail" onclick="showOrderDetailModal('${encodedOrderId}')">Detail</button>
+                    <button class="action-btn" title="Lihat detail" data-action="showOrderDetailModal" data-key="${encodedOrderId}">Detail</button>
                     ${processButton}
                     ${completeButton}
                 </td>

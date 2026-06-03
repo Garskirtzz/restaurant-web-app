@@ -40,8 +40,8 @@
                     <td>${escapeHTML(formatCurrency(item.price))}</td>
                     <td>${item.available !== false ? 'Tersedia' : 'Tidak Tersedia'}</td>
                     <td>
-                        <button class="action-btn" onclick="showEditMenuModalById('${key}')">Edit</button>
-                        <button class="action-btn" onclick="deleteMenuItem('${key}')">Hapus</button>
+                        <button class="action-btn" data-action="showEditMenuModalById" data-key="${key}">Edit</button>
+                        <button class="action-btn" data-action="deleteMenuItem" data-key="${key}">Hapus</button>
                     </td>
                 `;
                 tbody.appendChild(row);
@@ -223,7 +223,7 @@
                     <td>${escapeHTML(item.name)}</td>
                     <td>${escapeHTML(formatCurrency(item.price))}</td>
                     <td><input type="number" min="1" value="1" id="order-qty-${key}" style="width: 70px;"></td>
-                    <td><button class="action-btn" onclick="addToCurrentOrder('${key}')">Tambah</button></td>
+                    <td><button class="action-btn" data-action="addToCurrentOrder" data-key="${key}">Tambah</button></td>
                 `;
                 tbody.appendChild(row);
             });

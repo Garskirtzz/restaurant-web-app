@@ -48,8 +48,8 @@
             <h1>Login Restoran</h1>
 
             <div class="login-tabs">
-                <div class="login-tab active" onclick="switchLoginTab('user')">Pelanggan</div>
-                <div class="login-tab" onclick="switchLoginTab('admin')">Admin</div>
+                <div class="login-tab active" data-action="switchLoginTab" data-login-tab="user">Pelanggan</div>
+                <div class="login-tab" data-action="switchLoginTab" data-login-tab="admin">Admin</div>
             </div>
 
             <div id="user-login-form">
@@ -60,11 +60,11 @@
                 <div class="form-group">
                     <label for="user-password">Password</label>
                     <input type="password" id="user-password" placeholder="Masukkan password">
-                    <button type="button" class="password-toggle" onclick="togglePassword('user-password')" aria-label="Tampilkan password">
+                    <button type="button" class="password-toggle" data-action="togglePassword" data-target="user-password" aria-label="Tampilkan password">
                         <svg class="ui-icon" aria-hidden="true"><use href="#icon-eye"></use></svg>
                     </button>
                 </div>
-                <button class="login-btn" onclick="userLogin()">Login</button>
+                <button class="login-btn" data-action="userLogin">Login</button>
                 <div id="user-login-error" class="error-message">Username atau password salah!</div>
             </div>
 
@@ -76,11 +76,11 @@
                 <div class="form-group">
                     <label for="admin-password">Password Admin</label>
                     <input type="password" id="admin-password" placeholder="Masukkan password admin">
-                    <button type="button" class="password-toggle" onclick="togglePassword('admin-password')" aria-label="Tampilkan password admin">
+                    <button type="button" class="password-toggle" data-action="togglePassword" data-target="admin-password" aria-label="Tampilkan password admin">
                         <svg class="ui-icon" aria-hidden="true"><use href="#icon-eye"></use></svg>
                     </button>
                 </div>
-                <button class="login-btn" onclick="adminLogin()">Login Admin</button>
+                <button class="login-btn" data-action="adminLogin">Login Admin</button>
                 <div id="admin-login-error" class="error-message">Username atau password admin salah!</div>
             </div>
         </div>
@@ -93,7 +93,7 @@
             <nav class="admin-nav">
                 <a href="#" class="active">Admin</a>
                 <a href="index.html">Kembali ke Menu</a>
-                <a href="#" onclick="logout()">Logout</a>
+                <a href="#" data-action="logout">Logout</a>
             </nav>
         </header>
 
@@ -114,7 +114,7 @@
                     <div class="page-header">
                         <h1 class="page-title">Dashboard</h1>
                         <div class="page-actions">
-                            <button class="btn" onclick="showAddMenuModal()">Tambah Menu Baru</button>
+                            <button class="btn" data-action="showAddMenuModal">Tambah Menu Baru</button>
                         </div>
                     </div>
 
@@ -148,15 +148,15 @@
                         </div>
                         <div class="order-status-tabs" role="tablist" aria-label="Filter status pesanan">
                             <button type="button" class="order-status-tab active" data-order-status="incoming"
-                                onclick="setDashboardOrderStatus('incoming')" aria-pressed="true">
+                                data-action="setDashboardOrderStatus" aria-pressed="true">
                                 Pesanan Masuk <span class="tab-count is-empty" id="incoming-orders-count" aria-label="0 notifikasi baru">0</span>
                             </button>
                             <button type="button" class="order-status-tab" data-order-status="processing"
-                                onclick="setDashboardOrderStatus('processing')" aria-pressed="false">
+                                data-action="setDashboardOrderStatus" aria-pressed="false">
                                 Diproses <span class="tab-count is-empty" id="processing-orders-count" aria-label="0 notifikasi baru">0</span>
                             </button>
                             <button type="button" class="order-status-tab" data-order-status="completed"
-                                onclick="setDashboardOrderStatus('completed')" aria-pressed="false">
+                                data-action="setDashboardOrderStatus" aria-pressed="false">
                                 Selesai <span class="tab-count is-empty" id="completed-orders-count" aria-label="0 notifikasi baru">0</span>
                             </button>
                         </div>
@@ -215,7 +215,7 @@
                     <div class="page-header">
                         <h1 class="page-title">Manajemen Menu</h1>
                         <div class="page-actions">
-                            <button class="btn" onclick="showAddMenuModal()">Tambah Menu Baru</button>
+                            <button class="btn" data-action="showAddMenuModal">Tambah Menu Baru</button>
                         </div>
                     </div>
 
@@ -243,7 +243,7 @@
                     <div class="page-header">
                         <h1 class="page-title">Manajemen Meja</h1>
                         <div class="page-actions">
-                            <button class="btn" onclick="showAddTableModal()">Tambah Meja</button>
+                            <button class="btn" data-action="showAddTableModal">Tambah Meja</button>
                         </div>
                     </div>
 
@@ -270,8 +270,8 @@
                     <div class="page-header">
                         <h1 class="page-title">Laporan</h1>
                         <div class="page-actions">
-                            <button class="btn" onclick="generateDailyReport()">Laporan Harian</button>
-                            <button class="btn" onclick="generateMonthlyReport()">Laporan Bulanan</button>
+                            <button class="btn" data-action="generateDailyReport">Laporan Harian</button>
+                            <button class="btn" data-action="generateMonthlyReport">Laporan Bulanan</button>
                         </div>
                     </div>
 
@@ -286,7 +286,7 @@
                                 <label for="report-end-date">Sampai Tanggal</label>
                                 <input type="date" id="report-end-date">
                             </div>
-                            <button class="btn" onclick="generateCustomReport()">Buat Laporan</button>
+                            <button class="btn" data-action="generateCustomReport">Buat Laporan</button>
                         </div>
 
                         <div id="report-results">
@@ -320,8 +320,8 @@
                             <input type="text" id="restaurant-hours" placeholder="Contoh: 10:00 - 22:00">
                         </div>
                         <div class="form-actions">
-                            <button class="btn btn-cancel" onclick="resetSettings()">Reset</button>
-                            <button class="btn" onclick="saveSettings()">Simpan Pengaturan</button>
+                            <button class="btn btn-cancel" data-action="resetSettings">Reset</button>
+                            <button class="btn" data-action="saveSettings">Simpan Pengaturan</button>
                         </div>
                     </div>
                 </div>
@@ -336,7 +336,7 @@
             <nav class="admin-nav">
                 <a href="#" class="active">Pelanggan</a>
                 <a href="index.html">Kembali ke Menu</a>
-                <a href="#" onclick="logout()">Logout</a>
+                <a href="#" data-action="logout">Logout</a>
             </nav>
         </header>
 
@@ -455,8 +455,8 @@
                         </div>
 
                         <div class="form-actions">
-                            <button class="btn btn-cancel" onclick="clearOrder()">Bersihkan</button>
-                            <button class="btn" onclick="submitOrder()">Pesan Sekarang</button>
+                            <button class="btn btn-cancel" data-action="clearOrder">Bersihkan</button>
+                            <button class="btn" data-action="submitOrder">Pesan Sekarang</button>
                         </div>
                     </div>
                 </div>
@@ -485,7 +485,7 @@
                             <textarea id="user-profile-address" placeholder="Masukkan alamat"></textarea>
                         </div>
                         <div class="form-actions">
-                            <button class="btn" onclick="saveUserProfile()">Simpan Profil</button>
+                            <button class="btn" data-action="saveUserProfile">Simpan Profil</button>
                         </div>
                     </div>
                 </div>
@@ -498,7 +498,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h3 class="modal-title">Tambah Menu Baru</h3>
-                <button class="close-modal" onclick="closeModal('add-menu-modal')">×</button>
+                <button class="close-modal" data-action="closeModal" data-modal-id="add-menu-modal">×</button>
             </div>
             <div class="form-container">
                 <div class="form-group">
@@ -531,8 +531,8 @@
                     </label>
                 </div>
                 <div class="form-actions">
-                    <button class="btn btn-cancel" onclick="closeModal('add-menu-modal')">Batal</button>
-                    <button class="btn" onclick="saveMenuItem()">Simpan Menu</button>
+                    <button class="btn btn-cancel" data-action="closeModal" data-modal-id="add-menu-modal">Batal</button>
+                    <button class="btn" data-action="saveMenuItem">Simpan Menu</button>
                 </div>
             </div>
         </div>
@@ -543,7 +543,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h3 class="modal-title">Edit Menu</h3>
-                <button class="close-modal" onclick="closeModal('edit-menu-modal')">×</button>
+                <button class="close-modal" data-action="closeModal" data-modal-id="edit-menu-modal">×</button>
             </div>
             <div class="form-container">
                 <input type="hidden" id="edit-menu-id">
@@ -577,8 +577,8 @@
                     </label>
                 </div>
                 <div class="form-actions">
-                    <button class="btn btn-cancel" onclick="closeModal('edit-menu-modal')">Batal</button>
-                    <button class="btn" onclick="updateMenuItem()">Update Menu</button>
+                    <button class="btn btn-cancel" data-action="closeModal" data-modal-id="edit-menu-modal">Batal</button>
+                    <button class="btn" data-action="updateMenuItem">Update Menu</button>
                 </div>
             </div>
         </div>
@@ -589,7 +589,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h3 class="modal-title">Detail Pesanan <span id="detail-order-id"></span></h3>
-                <button class="close-modal" onclick="closeModal('order-detail-modal')">×</button>
+                <button class="close-modal" data-action="closeModal" data-modal-id="order-detail-modal">×</button>
             </div>
             <div style="padding: 1.5rem;">
                 <div style="margin-bottom: 1.5rem;">
@@ -610,11 +610,11 @@
                 </div>
 
                 <div class="modal-footer">
-                    <button class="btn btn-cancel" onclick="closeModal('order-detail-modal')">Tutup</button>
+                    <button class="btn btn-cancel" data-action="closeModal" data-modal-id="order-detail-modal">Tutup</button>
                     <button class="btn" id="process-order-btn" style="display: none;"
-                        onclick="processOrder()">Proses Pesanan</button>
+                        data-action="processOrder">Proses Pesanan</button>
                     <button class="btn" id="complete-order-btn" style="display: none;"
-                        onclick="completeOrder()">Selesaikan Pesanan</button>
+                        data-action="completeOrder">Selesaikan Pesanan</button>
                 </div>
             </div>
         </div>
@@ -625,7 +625,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h3 class="modal-title">Tambah Meja Baru</h3>
-                <button class="close-modal" onclick="closeModal('add-table-modal')">×</button>
+                <button class="close-modal" data-action="closeModal" data-modal-id="add-table-modal">×</button>
             </div>
             <div class="form-container">
                 <div class="form-group">
@@ -637,8 +637,8 @@
                     <input type="number" id="table-capacity" placeholder="Masukkan kapasitas meja">
                 </div>
                 <div class="form-actions">
-                    <button class="btn btn-cancel" onclick="closeModal('add-table-modal')">Batal</button>
-                    <button class="btn" onclick="saveTable()">Simpan Meja</button>
+                    <button class="btn btn-cancel" data-action="closeModal" data-modal-id="add-table-modal">Batal</button>
+                    <button class="btn" data-action="saveTable">Simpan Meja</button>
                 </div>
             </div>
         </div>

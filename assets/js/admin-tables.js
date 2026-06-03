@@ -59,8 +59,8 @@
                     <td>${escapeHTML(table.capacity)} orang</td>
                     <td>${table.activeOrderId ? '#' + escapeHTML(table.activeOrderId) : '-'}</td>
                     <td>
-                        <button class="action-btn" onclick="editTable('${key}')">Edit</button>
-                        <button class="action-btn" onclick="deleteTable('${key}')">Hapus</button>
+                        <button class="action-btn" data-action="editTable" data-key="${key}">Edit</button>
+                        <button class="action-btn" data-action="deleteTable" data-key="${key}">Hapus</button>
                     </td>
                 `;
                 tbody.appendChild(row);

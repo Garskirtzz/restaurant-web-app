@@ -30,6 +30,7 @@
 
         // Initialize
         document.addEventListener('DOMContentLoaded', async function () {
+            window.RestaurantUtils.delegateActions(document, INDEX_ACTIONS);
             apiAvailable = await RestaurantAPI.isAvailable();
             await hydrateCustomerSession();
             loadCartFromStorage();
@@ -488,14 +489,14 @@
                         <div class="cart-item-name">${escapeHtml(item.name)}</div>
                         <div class="cart-item-price">Rp${price.toLocaleString('id-ID')} x ${quantity}</div>
                         <div class="cart-item-quantity">
-                            <button class="quantity-btn" onclick="updateCartItemQuantityByIndex(${index}, ${quantity - 1})">-</button>
+                            <button class="quantity-btn" data-action="updateCartItemQuantityByIndex" data-index="${index}" data-quantity="${quantity - 1}">-</button>
                             <span>${quantity}</span>
-                            <button class="quantity-btn" onclick="updateCartItemQuantityByIndex(${index}, ${quantity + 1})">+</button>
+                            <button class="quantity-btn" data-action="updateCartItemQuantityByIndex" data-index="${index}" data-quantity="${quantity + 1}">+</button>
                         </div>
                     </div>
                     <div class="cart-item-actions">
                         <div class="cart-item-total">Rp${itemTotal.toLocaleString('id-ID')}</div>
-                        <button class="cart-item-remove" onclick="removeCartItemByIndex(${index})">×</button>
+                        <button class="cart-item-remove" data-action="removeCartItemByIndex" data-index="${index}">×</button>
                     </div>
                 `;
                 cartItemsContainer.appendChild(cartItemElement);
@@ -826,4 +827,29 @@
             quantity = Math.max(0, quantity);
             quantityElement.textContent = quantity;
         }
+
+        // Maps data-action values to handlers for delegated (CSP-safe) event handling.
+        const INDEX_ACTIONS = {
+            openOrderHistory: () => openOrderHistory(),
+            openModal: (el) => openModal(el.dataset.modalId),
+            closeModal: (el) => closeModal(el.dataset.modalId),
+            customerSignOut: () => customerSignOut(),
+            toggleCart: () => toggleCart(),
+            showCheckoutModal: () => showCheckoutModal(),
+            showClearCartModal: () => showClearCartModal(),
+            processPayment: () => processPayment(),
+            clearCart: () => clearCart(),
+            switchAuthTab: (el) => switchAuthTab(el.dataset.authTab),
+            customerSignIn: () => customerSignIn(),
+            createCustomerAccount: () => createCustomerAccount(),
+            toggleCustomerCreateMode: (el) => toggleCustomerCreateMode(el.dataset.createMode === 'true'),
+            adminSignInFromIndex: () => adminSignInFromIndex(),
+            filterMenu: (el) => filterMenu(el.dataset.category, el),
+            focusCard: (el) => focusCard(el),
+            selectPaymentMethod: (el) => selectPaymentMethod(el),
+            addToCart: (el) => addToCart(el.dataset.name, Number(el.dataset.price), el),
+            updateQuantityInCard: (el) => updateQuantityInCard(el, Number(el.dataset.delta)),
+            updateCartItemQuantityByIndex: (el) => updateCartItemQuantityByIndex(Number(el.dataset.index), Number(el.dataset.quantity)),
+            removeCartItemByIndex: (el) => removeCartItemByIndex(Number(el.dataset.index))
+        };
 

@@ -30,7 +30,7 @@
                     <td>${escapeHTML(formatDate(order.timestamp))}</td>
                     <td>${escapeHTML(formatCurrency(order.total))}</td>
                     <td><span class="status ${escapeHTML(order.status || 'pending')}">${escapeHTML(getStatusText(order.status))}</span></td>
-                    <td><button class="action-btn" onclick="showOrderDetailModal('${encodeKey(orderId)}')">Detail</button></td>
+                    <td><button class="action-btn" data-action="showOrderDetailModal" data-key="${encodeKey(orderId)}">Detail</button></td>
                 `;
                 tbody.appendChild(row);
             });
@@ -106,7 +106,7 @@
                 itemElement.className = 'order-item';
                 itemElement.innerHTML = `
                     <span>${escapeHTML(item.name)} (${Number(item.quantity)}x)</span>
-                    <span>${escapeHTML(formatCurrency(item.price * item.quantity))} <button class="action-btn" onclick="removeCurrentOrderItem('${key}')">Hapus</button></span>
+                    <span>${escapeHTML(formatCurrency(item.price * item.quantity))} <button class="action-btn" data-action="removeCurrentOrderItem" data-key="${key}">Hapus</button></span>
                 `;
                 container.appendChild(itemElement);
             });

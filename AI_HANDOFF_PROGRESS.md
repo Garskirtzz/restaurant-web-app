@@ -156,10 +156,14 @@ Completed:
 - API wrapper lives in `assets/js/api-client.js`.
 - A number of inline style/AI-generated rigid UI patterns were replaced or reduced.
 
+Completed later (2026-06-04):
+- All inline `on*` handlers in `index.html` and `admin.html` were removed and replaced with `data-action` + `data-*` attributes.
+- A single delegated listener per page (`RestaurantUtils.delegateActions`) dispatches by nearest `data-action`, which also removed the need for inline `event.stopPropagation()`.
+- JS-generated rows/cards now emit `data-action` instead of inline `onclick`.
+
 Still worth improving:
-- Some HTML still uses inline `onclick` attributes.
-- Some rendering still uses `innerHTML`, although many user-controlled values are escaped.
-- A future cleanup could move all event handling to delegated listeners and render more DOM with `createElement`.
+- Some rendering still uses `innerHTML`, although user-controlled values are escaped. A future cleanup could render more DOM with `createElement`.
+- `style-src` still allows `'unsafe-inline'` because some inline `style=` attributes remain; removing those would let `style-src` be tightened too.
 
 ### 5. Backend API
 
@@ -295,7 +299,8 @@ Added later (2026-06-04):
 
 Security caveats:
 - Tokens are still stored in `localStorage`; acceptable for this prototype but not ideal for high-risk production.
-- Some inline `onclick` remains, so CSP still allows `'unsafe-inline'`.
+- CSP `script-src` is now strict (`'self'`, no `'unsafe-inline'`). `style-src` still allows `'unsafe-inline'` because inline `style=` attributes remain.
+- `admin - Copy.html` is a tracked but unreferenced backup that still contains inline handlers; it is not part of the app and will not work under the strict CSP. Recommend deleting it.
 - Rate limiting/lockout state is in-memory and per-process, so on Vercel it is best-effort per warm instance, not shared across scaled instances. A shared store (DB/Redis) is needed for strict guarantees.
 - No formal password reset flow yet.
 
@@ -419,10 +424,11 @@ Done:
 - Account lockout / cooldown after failed login attempts (per IP+role+username), returns 429 + Retry-After.
 - Server-side audit log for admin actions (`admin_audit_log`, schema v3, `GET /api/audit-log`).
 - Structured error logging via the `restaurant` logger (`RESTAURANT_LOG_LEVEL`); 500s log a full traceback with request_id/method/path/client, client disconnects are quiet warnings. Error handling centralized in `RestaurantHandler.run_method`/`dispatch` and reused by the Vercel adapter.
+- Removed all inline `on*` handlers (data-action delegation) and tightened CSP `script-src` to `'self'` (no `'unsafe-inline'`). Playwright asserts the strict CSP, the absence of inline handlers, and that delegated dynamic buttons work.
 
 Still recommended:
 - Move auth tokens to secure HTTP-only cookies if the project becomes more serious.
-- Remove inline `onclick` and then tighten CSP by removing `'unsafe-inline'`.
+- Remove remaining inline `style=` attributes so `style-src 'unsafe-inline'` can also be dropped.
 - Add backup automation beyond manual Supabase backups.
 - Consider a shared-store (DB/Redis) limiter if strict cross-instance limits are needed (current limiter is in-memory per process).
 

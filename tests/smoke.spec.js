@@ -155,6 +155,41 @@ test('api locks out repeated failed admin logins with 429 and Retry-After', asyn
   expect(Number(locked.headers()['retry-after'])).toBeGreaterThan(0);
 });
 
+test('served pages use a strict script CSP without inline handlers', async ({ page, request }) => {
+  for (const path of ['/index.html', '/admin.html']) {
+    const response = await request.get(path);
+    const csp = response.headers()['content-security-policy'] || '';
+    expect(csp).toContain("script-src 'self'");
+    expect(csp).not.toContain("script-src 'self' 'unsafe-inline'");
+  }
+
+  await page.goto('/index.html');
+  const indexInlineHandlers = await page.locator('[onclick], [onsubmit], [onchange]').count();
+  expect(indexInlineHandlers).toBe(0);
+
+  await page.goto('/admin.html');
+  const adminInlineHandlers = await page.locator('[onclick], [onsubmit], [onchange]').count();
+  expect(adminInlineHandlers).toBe(0);
+});
+
+test('delegated dynamic action buttons work under strict CSP', async ({ page }) => {
+  await loginAdmin(page);
+
+  const menuLoaded = page.waitForResponse(response => {
+    return response.url().endsWith('/api/menu') && response.request().method() === 'GET';
+  });
+  await page.locator('#admin-panel .sidebar-menu a[href="#menu"]').click();
+  await menuLoaded;
+
+  // Edit buttons are rendered by JS with data-action; clicking exercises delegation.
+  await page.locator('#menu-table tbody .action-btn', { hasText: 'Edit' }).first().click();
+  await expect(page.locator('#edit-menu-modal')).toBeVisible();
+  await expect(page.locator('#edit-menu-name')).not.toHaveValue('');
+
+  await page.locator('#edit-menu-modal .close-modal').click();
+  await expect(page.locator('#edit-menu-modal')).toBeHidden();
+});
+
 test('admin mutations are recorded in the audit log', async ({ request }) => {
   const token = await requestAdminToken(request);
   const headers = { Authorization: `Bearer ${token}` };

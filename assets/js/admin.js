@@ -239,7 +239,43 @@
             if (modal) modal.style.display = 'none';
         }
 
+        // Maps data-action values to handlers for delegated (CSP-safe) event handling.
+        const ADMIN_ACTIONS = {
+            switchLoginTab: (el) => switchLoginTab(el.dataset.loginTab),
+            togglePassword: (el) => togglePassword(el.dataset.target),
+            userLogin: () => userLogin(),
+            adminLogin: () => adminLogin(),
+            logout: () => logout(),
+            closeModal: (el) => closeModal(el.dataset.modalId),
+            showAddMenuModal: () => showAddMenuModal(),
+            setDashboardOrderStatus: (el) => setDashboardOrderStatus(el.dataset.orderStatus),
+            showAddTableModal: () => showAddTableModal(),
+            generateDailyReport: () => generateDailyReport(),
+            generateMonthlyReport: () => generateMonthlyReport(),
+            generateCustomReport: () => generateCustomReport(),
+            resetSettings: () => resetSettings(),
+            saveSettings: () => saveSettings(),
+            clearOrder: () => clearOrder(),
+            submitOrder: () => submitOrder(),
+            saveUserProfile: () => saveUserProfile(),
+            saveMenuItem: () => saveMenuItem(),
+            updateMenuItem: () => updateMenuItem(),
+            processOrder: () => processOrder(),
+            completeOrder: () => completeOrder(),
+            saveTable: () => saveTable(),
+            processOrderFromTable: (el) => processOrderFromTable(el.dataset.key),
+            completeOrderFromTable: (el) => completeOrderFromTable(el.dataset.key),
+            showOrderDetailModal: (el) => showOrderDetailModal(el.dataset.key),
+            showEditMenuModalById: (el) => showEditMenuModalById(el.dataset.key),
+            deleteMenuItem: (el) => deleteMenuItem(el.dataset.key),
+            addToCurrentOrder: (el) => addToCurrentOrder(el.dataset.key),
+            editTable: (el) => editTable(el.dataset.key),
+            deleteTable: (el) => deleteTable(el.dataset.key),
+            removeCurrentOrderItem: (el) => removeCurrentOrderItem(el.dataset.key)
+        };
+
         document.addEventListener('DOMContentLoaded', async function () {
+            window.RestaurantUtils.delegateActions(document, ADMIN_ACTIONS);
             showPanel('login-page');
             apiAvailable = await RestaurantAPI.isAvailable();
             ensureDefaultData();
