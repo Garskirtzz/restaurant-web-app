@@ -1,20 +1,9 @@
-const ADMIN_CREDENTIALS = {
-            username: "admin",
-            password: "password123"
-        };
-
         const ORDERS_STORAGE_KEY = 'restaurantOrders';
         const MENU_STORAGE_KEY = 'restaurantMenu';
         const TABLES_STORAGE_KEY = 'restaurantTables';
-        const USERS_STORAGE_KEY = 'restaurantUsers';
         const ADMIN_AUTH_TOKEN_KEY = 'restaurantAdminToken';
         const CUSTOMER_AUTH_TOKEN_KEY = 'restaurantCustomerToken';
         const CUSTOMER_SESSION_KEY = 'restaurantCustomerSession';
-
-        const DEFAULT_USERS = [
-            { username: "user1", password: "user123", name: "Pelanggan 1", email: "user1@example.com", phone: "081234567890", address: "Jl. Contoh No. 1" },
-            { username: "user2", password: "user123", name: "Pelanggan 2", email: "user2@example.com", phone: "082345678901", address: "Jl. Contoh No. 2" }
-        ];
 
         const DEFAULT_TABLES = [
             { number: 1, capacity: 4, status: 'available' },
@@ -39,7 +28,6 @@ const ADMIN_CREDENTIALS = {
             { id: '9', name: 'Kolak Pisang Ubi', category: 'dessert', price: 20000, description: 'Kolak hangat dengan santan gula merah.', image: '', available: true }
         ];
 
-        let USER_CREDENTIALS = [...DEFAULT_USERS];
         let currentEditingId = null;
         let currentViewingOrderId = null;
         let currentUser = null;
@@ -171,12 +159,6 @@ const ADMIN_CREDENTIALS = {
                 saveTables(DEFAULT_TABLES);
             }
 
-            const storedUsers = localStorage.getItem(USERS_STORAGE_KEY);
-            if (storedUsers) {
-                USER_CREDENTIALS = readArrayFromStorage(USERS_STORAGE_KEY, DEFAULT_USERS);
-            } else {
-                writeArrayToStorage(USERS_STORAGE_KEY, DEFAULT_USERS);
-            }
         }
 
         function formatDate(value) {

@@ -51,14 +51,7 @@
                 return;
             }
 
-            currentUser = {
-                ...currentUser,
-                ...profile
-            };
-
-            USER_CREDENTIALS = USER_CREDENTIALS.map(user => user.username === currentUser.username ? currentUser : user);
-            writeArrayToStorage(USERS_STORAGE_KEY, USER_CREDENTIALS);
-            alert('Profil berhasil diperbarui');
+            alert('Server API tidak tersedia. Profil tidak bisa diperbarui.');
         }
 
         function fillSettingsForm(settings = {}) {

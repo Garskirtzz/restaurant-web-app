@@ -60,6 +60,18 @@ test('admin login shows dashboard without overlapping login layer', async ({ pag
   await expectNoMojibake(page);
 });
 
+test('admin dashboard rejects stale localStorage login flag without token', async ({ page }) => {
+  await page.goto('/admin.html');
+  await page.evaluate(() => {
+    localStorage.setItem('adminLoggedIn', 'true');
+    localStorage.removeItem('restaurantAdminToken');
+  });
+  await page.reload();
+
+  await expect(page.locator('#login-page')).toBeVisible();
+  await expect(page.locator('#admin-panel')).toBeHidden();
+});
+
 test('admin settings save to API-backed restaurant settings', async ({ page, request }) => {
   await loginAdmin(page);
 

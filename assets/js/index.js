@@ -1,17 +1,8 @@
 ﻿// Data state
-        const ADMIN_CREDENTIALS = {
-            username: 'admin',
-            password: 'password123'
-        };
-        const USERS_STORAGE_KEY = 'restaurantUsers';
         const CART_STORAGE_KEY = 'restaurantCart';
         const CUSTOMER_AUTH_TOKEN_KEY = 'restaurantCustomerToken';
         const CUSTOMER_SESSION_KEY = 'restaurantCustomerSession';
         const ADMIN_AUTH_TOKEN_KEY = 'restaurantAdminToken';
-        const DEFAULT_CUSTOMER_USERS = [
-            { username: 'user1', password: 'user123', name: 'Pelanggan 1', email: 'user1@example.com', phone: '081234567890', address: 'Jl. Contoh No. 1' },
-            { username: 'user2', password: 'user123', name: 'Pelanggan 2', email: 'user2@example.com', phone: '082345678901', address: 'Jl. Contoh No. 2' }
-        ];
         let cart = [];
         let customerInfo = {
             name: '',
@@ -38,19 +29,12 @@
 
         // Initialize
         document.addEventListener('DOMContentLoaded', async function () {
-            ensureCustomerUsers();
             apiAvailable = await RestaurantAPI.isAvailable();
-            hydrateCustomerSession();
+            await hydrateCustomerSession();
             loadCartFromStorage();
             updateCartUI();
             loadCheckoutTablesFromApi();
             renderOrderHistory();
-        });
-
-        window.addEventListener('storage', function (event) {
-            if (event.key === 'restaurantOrders') {
-                renderOrderHistory();
-            }
         });
 
         // Helper functions
@@ -91,10 +75,14 @@
             localStorage.removeItem('adminLoggedIn');
             localStorage.setItem('currentUser', user.username);
             localStorage.setItem(CUSTOMER_SESSION_KEY, JSON.stringify(user));
+            localStorage.setItem(CUSTOMER_AUTH_TOKEN_KEY, token);
+        }
 
-            if (token) {
-                localStorage.setItem(CUSTOMER_AUTH_TOKEN_KEY, token);
-            }
+        function clearCustomerSession() {
+            localStorage.removeItem('userLoggedIn');
+            localStorage.removeItem('currentUser');
+            localStorage.removeItem(CUSTOMER_AUTH_TOKEN_KEY);
+            localStorage.removeItem(CUSTOMER_SESSION_KEY);
         }
 
         function getStoredCustomerSession() {
@@ -116,7 +104,7 @@
         }
 
         function getSignedInCustomer() {
-            if (localStorage.getItem('userLoggedIn') !== 'true') {
+            if (localStorage.getItem('userLoggedIn') !== 'true' || !getCustomerToken()) {
                 return null;
             }
 
@@ -125,21 +113,29 @@
                 return storedSession;
             }
 
-            const username = localStorage.getItem('currentUser');
-
-            if (!username) {
-                return null;
-            }
-
-            return loadCustomerUsers().find(user => user.username === username) || null;
+            return null;
         }
 
         function isCustomerSignedIn() {
             return Boolean(getSignedInCustomer());
         }
 
-        function hydrateCustomerSession() {
-            const customer = getSignedInCustomer();
+        async function hydrateCustomerSession() {
+            let customer = getSignedInCustomer();
+
+            if (customer && apiAvailable) {
+                try {
+                    const response = await RestaurantAPI.getCurrentUser(getCustomerToken());
+                    customer = response.user;
+                    localStorage.setItem(CUSTOMER_SESSION_KEY, JSON.stringify(customer));
+                    localStorage.setItem('currentUser', customer.username);
+                } catch (error) {
+                    clearCustomerSession();
+                    customer = null;
+                }
+            } else if (localStorage.getItem('userLoggedIn') === 'true' && !customer) {
+                clearCustomerSession();
+            }
 
             document.body.classList.toggle('customer-signed-in', Boolean(customer));
 
@@ -297,28 +293,6 @@
             }
         }
 
-        function loadOrdersFromStorage() {
-            const savedOrders = localStorage.getItem('restaurantOrders');
-
-            if (!savedOrders) {
-                return [];
-            }
-
-            try {
-                const orders = JSON.parse(savedOrders);
-                return Array.isArray(orders) ? orders : [];
-            } catch (error) {
-                console.error('Gagal membaca data pesanan:', error);
-                return [];
-            }
-        }
-
-        function saveOrderToStorage(order) {
-            const orders = loadOrdersFromStorage();
-            orders.push(order);
-            localStorage.setItem('restaurantOrders', JSON.stringify(orders));
-        }
-
         async function saveOrder(order) {
             const token = getCustomerToken();
 
@@ -333,34 +307,7 @@
                 return normalizeApiOrder(response.order);
             }
 
-            saveOrderToStorage(order);
-            return order;
-        }
-
-        function loadCustomerUsers() {
-            const rawUsers = localStorage.getItem(USERS_STORAGE_KEY);
-
-            if (!rawUsers) {
-                return [...DEFAULT_CUSTOMER_USERS];
-            }
-
-            try {
-                const users = JSON.parse(rawUsers);
-                return Array.isArray(users) ? users : [...DEFAULT_CUSTOMER_USERS];
-            } catch (error) {
-                console.error('Gagal membaca data customer:', error);
-                return [...DEFAULT_CUSTOMER_USERS];
-            }
-        }
-
-        function saveCustomerUsers(users) {
-            localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
-        }
-
-        function ensureCustomerUsers() {
-            if (!localStorage.getItem(USERS_STORAGE_KEY)) {
-                saveCustomerUsers(DEFAULT_CUSTOMER_USERS);
-            }
+            throw new Error('Server API tidak tersedia untuk menyimpan pesanan.');
         }
 
         async function loadCheckoutTablesFromApi() {
@@ -407,13 +354,7 @@
                 return (response.orders || []).map(normalizeApiOrder);
             }
 
-            return loadOrdersFromStorage().filter(order => {
-                if (order.customerUsername) {
-                    return order.customerUsername === customer.username;
-                }
-
-                return order.customerName === customer.name;
-            });
+            return [];
         }
 
         async function renderOrderHistory() {
@@ -611,10 +552,13 @@
             if (createView) createView.hidden = !showCreateForm;
         }
 
-        function setAuthError(errorId, shouldShow) {
+        function setAuthError(errorId, shouldShow, message = '') {
             const errorElement = document.getElementById(errorId);
 
             if (errorElement) {
+                if (message) {
+                    errorElement.textContent = message;
+                }
                 errorElement.hidden = !shouldShow;
             }
         }
@@ -625,26 +569,27 @@
             let user = null;
             let token = '';
 
-            if (apiAvailable) {
-                try {
-                    const response = await RestaurantAPI.customerLogin({ username, password });
-                    user = response.user;
-                    token = response.token;
-                } catch (error) {
-                    setAuthError('customer-auth-error', true);
-                    return;
-                }
-            } else {
-                user = loadCustomerUsers().find(item => item.username === username && item.password === password);
+            if (!apiAvailable) {
+                setAuthError('customer-auth-error', true, 'Server is unavailable. Please run the local API first.');
+                return;
+            }
+
+            try {
+                const response = await RestaurantAPI.customerLogin({ username, password });
+                user = response.user;
+                token = response.token;
+            } catch (error) {
+                setAuthError('customer-auth-error', true, 'Invalid username or password.');
+                return;
             }
 
             if (!user) {
-                setAuthError('customer-auth-error', true);
+                setAuthError('customer-auth-error', true, 'Invalid username or password.');
                 return;
             }
 
             setCustomerSession(user, token);
-            hydrateCustomerSession();
+            await hydrateCustomerSession();
             loadCartFromStorage();
             updateCartUI();
             renderOrderHistory();
@@ -658,31 +603,23 @@
             const name = document.getElementById('customer-create-name').value.trim();
             const username = document.getElementById('customer-create-username').value.trim();
             const password = document.getElementById('customer-create-password').value;
-            const users = loadCustomerUsers();
-            const isInvalid = !name || !username || !password || (!apiAvailable && users.some(user => user.username === username));
+            const isInvalid = !name || !username || !password;
 
             if (isInvalid) {
-                setAuthError('customer-create-error', true);
+                setAuthError('customer-create-error', true, 'Complete all fields.');
                 return;
             }
 
-            if (apiAvailable) {
-                try {
-                    await RestaurantAPI.customerRegister({ username, password, name });
-                } catch (error) {
-                    setAuthError('customer-create-error', true);
-                    return;
-                }
-            } else {
-                users.push({
-                    username,
-                    password,
-                    name,
-                    email: '',
-                    phone: '',
-                    address: ''
-                });
-                saveCustomerUsers(users);
+            if (!apiAvailable) {
+                setAuthError('customer-create-error', true, 'Server is unavailable. Please run the local API first.');
+                return;
+            }
+
+            try {
+                await RestaurantAPI.customerRegister({ username, password, name });
+            } catch (error) {
+                setAuthError('customer-create-error', true, error.payload?.error || 'Username is already used.');
+                return;
             }
 
             setAuthError('customer-create-error', false);
@@ -696,19 +633,17 @@
             const username = document.getElementById('index-admin-username').value.trim();
             const password = document.getElementById('index-admin-password').value;
 
-            if (apiAvailable) {
-                try {
-                    const response = await RestaurantAPI.adminLogin({ username, password });
-                    localStorage.setItem(ADMIN_AUTH_TOKEN_KEY, response.token);
-                } catch (error) {
-                    setAuthError('admin-auth-error', true);
-                    return;
-                }
-            } else {
-                if (username !== ADMIN_CREDENTIALS.username || password !== ADMIN_CREDENTIALS.password) {
-                    setAuthError('admin-auth-error', true);
-                    return;
-                }
+            if (!apiAvailable) {
+                setAuthError('admin-auth-error', true, 'Server is unavailable. Please run the local API first.');
+                return;
+            }
+
+            try {
+                const response = await RestaurantAPI.adminLogin({ username, password });
+                localStorage.setItem(ADMIN_AUTH_TOKEN_KEY, response.token);
+            } catch (error) {
+                setAuthError('admin-auth-error', true, 'Invalid admin credentials.');
+                return;
             }
 
             localStorage.setItem('adminLoggedIn', 'true');

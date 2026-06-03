@@ -117,7 +117,7 @@ Saat halaman dibuka lewat server lokal, frontend akan memakai API untuk bagian b
 - `index.html`: login/register customer, daftar meja checkout, checkout order, order history customer.
 - `admin.html`: login admin/customer, membaca order dashboard, update status order `pending -> processing -> completed`, CRUD menu, CRUD meja, profile customer, pengaturan restoran, dan laporan Best Seller.
 
-Jika server API tidak aktif atau file dibuka langsung dari explorer, sebagian alur lama masih fallback ke `localStorage`.
+Login, register customer, checkout, dan order history membutuhkan API aktif. `localStorage` hanya dipakai untuk cache UI non-sensitif seperti keranjang sementara dan fallback data tampilan saat development.
 
 ## Dokumentasi Project
 

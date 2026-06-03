@@ -53,24 +53,41 @@
             element.style.display = isVisible ? displayValue : 'none';
         }
 
+        function showLoginError(errorElement, message) {
+            if (!errorElement) return;
+
+            if (message) {
+                errorElement.textContent = message;
+            }
+            errorElement.style.display = 'block';
+        }
+
+        function clearStoredAuthState() {
+            localStorage.removeItem('adminLoggedIn');
+            localStorage.removeItem('userLoggedIn');
+            localStorage.removeItem('currentUser');
+            localStorage.removeItem(ADMIN_AUTH_TOKEN_KEY);
+            localStorage.removeItem(CUSTOMER_AUTH_TOKEN_KEY);
+            localStorage.removeItem(CUSTOMER_SESSION_KEY);
+            currentUser = null;
+        }
+
         async function adminLogin() {
             const username = document.getElementById('admin-username').value;
             const password = document.getElementById('admin-password').value;
             const errorElement = document.getElementById('admin-login-error');
 
-            if (apiAvailable) {
-                try {
-                    const response = await RestaurantAPI.adminLogin({ username, password });
-                    localStorage.setItem(ADMIN_AUTH_TOKEN_KEY, response.token);
-                } catch (error) {
-                    if (errorElement) errorElement.style.display = 'block';
-                    return;
-                }
-            } else {
-                if (username !== ADMIN_CREDENTIALS.username || password !== ADMIN_CREDENTIALS.password) {
-                    if (errorElement) errorElement.style.display = 'block';
-                    return;
-                }
+            if (!apiAvailable) {
+                showLoginError(errorElement, 'Server API tidak tersedia. Jalankan server lokal terlebih dahulu.');
+                return;
+            }
+
+            try {
+                const response = await RestaurantAPI.adminLogin({ username, password });
+                localStorage.setItem(ADMIN_AUTH_TOKEN_KEY, response.token);
+            } catch (error) {
+                showLoginError(errorElement, 'Username atau password admin salah!');
+                return;
             }
 
             localStorage.setItem('adminLoggedIn', 'true');
@@ -89,39 +106,28 @@
             const password = document.getElementById('user-password').value;
             const errorElement = document.getElementById('user-login-error');
 
-            if (apiAvailable) {
-                try {
-                    const response = await RestaurantAPI.customerLogin({ username, password });
-                    localStorage.setItem(CUSTOMER_AUTH_TOKEN_KEY, response.token);
-                    localStorage.setItem(CUSTOMER_SESSION_KEY, JSON.stringify(response.user));
-                    localStorage.setItem('userLoggedIn', 'true');
-                    localStorage.removeItem('adminLoggedIn');
-                    localStorage.removeItem(ADMIN_AUTH_TOKEN_KEY);
-                    localStorage.setItem('currentUser', response.user.username);
-                    currentUser = response.user;
-                    if (errorElement) errorElement.style.display = 'none';
-                    showPanel('user-panel');
-                    await initializeUserPanel();
-                    return;
-                } catch (error) {
-                    if (errorElement) errorElement.style.display = 'block';
-                    return;
-                }
-            }
-
-            const user = USER_CREDENTIALS.find(item => item.username === username && item.password === password);
-
-            if (user) {
-                localStorage.setItem('userLoggedIn', 'true');
-                localStorage.removeItem('adminLoggedIn');
-                localStorage.setItem('currentUser', username);
-                currentUser = user;
-                showPanel('user-panel');
-                await initializeUserPanel();
+            if (!apiAvailable) {
+                showLoginError(errorElement, 'Server API tidak tersedia. Jalankan server lokal terlebih dahulu.');
                 return;
             }
 
-            if (errorElement) errorElement.style.display = 'block';
+            try {
+                const response = await RestaurantAPI.customerLogin({ username, password });
+                localStorage.setItem(CUSTOMER_AUTH_TOKEN_KEY, response.token);
+                localStorage.setItem(CUSTOMER_SESSION_KEY, JSON.stringify(response.user));
+                localStorage.setItem('userLoggedIn', 'true');
+                localStorage.removeItem('adminLoggedIn');
+                localStorage.removeItem(ADMIN_AUTH_TOKEN_KEY);
+                localStorage.setItem('currentUser', response.user.username);
+                currentUser = response.user;
+                if (errorElement) errorElement.style.display = 'none';
+                showPanel('user-panel');
+                await initializeUserPanel();
+                return;
+            } catch (error) {
+                showLoginError(errorElement, 'Username atau password salah!');
+                return;
+            }
         }
 
         function logout() {
@@ -129,13 +135,7 @@
                 return;
             }
 
-            localStorage.removeItem('adminLoggedIn');
-            localStorage.removeItem('userLoggedIn');
-            localStorage.removeItem('currentUser');
-            localStorage.removeItem(ADMIN_AUTH_TOKEN_KEY);
-            localStorage.removeItem(CUSTOMER_AUTH_TOKEN_KEY);
-            localStorage.removeItem(CUSTOMER_SESSION_KEY);
-            currentUser = null;
+            clearStoredAuthState();
             showPanel('login-page');
         }
 
@@ -233,17 +233,30 @@
             startRealtimeOrdersSync();
 
             if (localStorage.getItem('adminLoggedIn') === 'true') {
-                localStorage.removeItem('userLoggedIn');
-                localStorage.removeItem('currentUser');
-                currentUser = null;
-                showPanel('admin-panel');
-                await initializeAdminPanel();
-                return;
+                const token = getAdminToken();
+
+                if (apiAvailable && token) {
+                    try {
+                        const response = await RestaurantAPI.getCurrentUser(token);
+                        if (response.user?.role === 'admin') {
+                            localStorage.removeItem('userLoggedIn');
+                            localStorage.removeItem('currentUser');
+                            currentUser = null;
+                            showPanel('admin-panel');
+                            await initializeAdminPanel();
+                            return;
+                        }
+                    } catch (error) {
+                        console.error('Session admin tidak valid:', error);
+                    }
+                }
+
+                clearStoredAuthState();
             }
 
             if (localStorage.getItem('userLoggedIn') === 'true') {
-                const username = localStorage.getItem('currentUser');
                 const rawSession = localStorage.getItem(CUSTOMER_SESSION_KEY);
+                const token = getCustomerToken();
 
                 try {
                     currentUser = rawSession ? JSON.parse(rawSession) : null;
@@ -251,18 +264,23 @@
                     currentUser = null;
                 }
 
-                if (!currentUser) {
-                    currentUser = USER_CREDENTIALS.find(user => user.username === username) || null;
+                if (apiAvailable && token) {
+                    try {
+                        const response = await RestaurantAPI.getCurrentUser(token);
+                        if (response.user?.role === 'customer') {
+                            currentUser = response.user;
+                            localStorage.setItem(CUSTOMER_SESSION_KEY, JSON.stringify(currentUser));
+                            localStorage.setItem('currentUser', currentUser.username);
+                            showPanel('user-panel');
+                            await initializeUserPanel();
+                            return;
+                        }
+                    } catch (error) {
+                        console.error('Session customer tidak valid:', error);
+                    }
                 }
 
-                if (currentUser) {
-                    showPanel('user-panel');
-                    await initializeUserPanel();
-                    return;
-                }
-
-                localStorage.removeItem('userLoggedIn');
-                localStorage.removeItem('currentUser');
+                clearStoredAuthState();
             }
 
             showPanel('login-page');

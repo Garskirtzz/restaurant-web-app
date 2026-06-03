@@ -133,7 +133,7 @@ Customer:
 
 - Sign in atau create account dari halaman `index.html`.
 - Melihat menu, menambahkan item ke keranjang, checkout, dan melihat order history.
-- Saat server aktif, order dikirim ke API.
+- Login, register, checkout, dan order history membutuhkan API lokal agar credential dan pesanan tidak diproses dari JavaScript browser.
 
 Admin:
 
