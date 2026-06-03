@@ -1,6 +1,6 @@
-# Local Backend Restoran
+# Backend Lokal Restoran
 
-Tahap ini membuat fondasi backend lokal dengan Python 3.11 dan SQLite tanpa dependency eksternal.
+Backend lokal memakai Python standard library dan SQLite tanpa dependency eksternal.
 
 ## Menjalankan
 
@@ -94,7 +94,7 @@ python server/app.py --host 127.0.0.1 --port 8010
 
 Konfigurasi Playwright memakai database test ini agar perubahan dari automated test tidak menyentuh `server/restaurant.db`.
 
-## Integrasi frontend saat ini
+## Integrasi Frontend
 
 Saat halaman dibuka lewat server lokal, frontend akan memakai API untuk bagian berikut:
 
@@ -103,6 +103,6 @@ Saat halaman dibuka lewat server lokal, frontend akan memakai API untuk bagian b
 
 Jika server API tidak aktif atau file dibuka langsung dari explorer, sebagian alur lama masih fallback ke `localStorage`.
 
-## Catatan tahap berikutnya
+## Dokumentasi Project
 
-Migrasi berikutnya adalah memecah JavaScript besar menjadi modul domain kecil seperti auth, orders, menu, tables, reports, dan settings.
+Panduan setup lengkap, struktur modul frontend, command test, dan kredensial development tersedia di README root project.
