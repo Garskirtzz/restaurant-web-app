@@ -57,6 +57,7 @@ Production health was last verified with:
 - `tests/smoke.spec.js`: core smoke/API tests.
 - `tests/responsive.spec.js`: responsive layout tests added for mobile/desktop QA.
 - `README.md`, `DEPLOYMENT.md`, `RELEASE_CHECKLIST.md`: existing project docs.
+- `OPERATIONS.md`: day-to-day operations (admin password reset, create admin, check orders, Supabase/Postgres backup, Vercel rollback, env/password rotation, connection recovery).
 - `.env.example`: env var template. Do not put real secrets here.
 
 ## Architecture Summary
@@ -274,10 +275,17 @@ Completed:
 - CORS from unknown external origin was verified not to open `Access-Control-Allow-Origin`.
 - Cart item rendering was hardened so item names are escaped before being inserted into HTML.
 
+Added later (2026-06-04):
+- In-process rate limiting for register (per IP) and order creation (per user) via `SlidingWindowCounter`.
+- Failed-login lockout keyed by (IP, role, username); returns HTTP 429 with `Retry-After`. Successful login resets the counter.
+- Tunable via `RESTAURANT_LOGIN_MAX_FAILURES`, `RESTAURANT_LOGIN_FAILURE_WINDOW_SECONDS`, `RESTAURANT_RATE_LIMIT_MAX`, `RESTAURANT_RATE_LIMIT_WINDOW_SECONDS`.
+- Self-test covers limiter logic; Playwright covers the 429 lockout path.
+
 Security caveats:
 - Tokens are still stored in `localStorage`; acceptable for this prototype but not ideal for high-risk production.
 - Some inline `onclick` remains, so CSP still allows `'unsafe-inline'`.
-- No production rate limiting yet.
+- Rate limiting/lockout state is in-memory and per-process, so on Vercel it is best-effort per warm instance, not shared across scaled instances. A shared store (DB/Redis) is needed for strict guarantees.
+- No server-side admin audit log yet.
 - No formal password reset flow yet.
 
 ### 9. Testing and QA
@@ -377,30 +385,32 @@ Admin login
 Admin order status update
 ```
 
-### Priority 3: Operational Documentation
+### Priority 3: Operational Documentation — DONE (2026-06-04)
 
-Needed docs:
-- How to reset/change admin password safely.
+Completed in `OPERATIONS.md`:
+- How to reset/change admin password safely (incl. the production caveat that env-only changes do not re-seed an already-bootstrapped Postgres DB; use SQL update with an app-generated PBKDF2 hash).
 - How to create an admin account.
 - How to check orders in admin panel.
-- How to backup Supabase/Postgres.
+- How to backup Supabase/Postgres (pg_dump via session pooler) and SQLite locally.
 - How to rollback a Vercel deployment.
 - How to rotate database password and Vercel env vars.
+- How to force-logout sessions.
 - How to recover if Supabase connection fails.
+- How to run production QA safely with cleanup.
 
-Possible file:
-- `OPERATIONS.md`
+### Priority 4: Production Hardening — PARTIAL (2026-06-04)
 
-### Priority 4: Production Hardening
+Done:
+- Rate limiting for register (per IP) and order creation (per user).
+- Account lockout / cooldown after failed login attempts (per IP+role+username), returns 429 + Retry-After.
 
-Recommended:
-- Add rate limiting for login/register/order endpoints.
-- Add account lockout or short cooldown after failed admin login attempts.
+Still recommended:
 - Move auth tokens to secure HTTP-only cookies if the project becomes more serious.
 - Remove inline `onclick` and then tighten CSP by removing `'unsafe-inline'`.
 - Add server-side audit log for admin actions.
 - Add better error logging for production failures.
 - Add backup automation beyond manual Supabase backups.
+- Consider a shared-store (DB/Redis) limiter if strict cross-instance limits are needed (current limiter is in-memory per process).
 
 ### Priority 5: UI/UX Polish
 
@@ -513,4 +523,4 @@ When making changes, keep the Grey Aesthetic from ui-architecture.md, maintain r
 
 ## Best Next Step
 
-The best next step is to create `OPERATIONS.md`, because the app already works in production and has passed QA. Operations documentation will make it easier to maintain, recover, and hand over before doing optional UI/branding polish.
+`OPERATIONS.md` is done (Priority 3). The next best step is Priority 1 (final branding and real restaurant content), which needs owner decisions, or Priority 4 (production hardening: rate limiting, login lockout, admin audit log, tighten CSP), which can be done in code without owner input.

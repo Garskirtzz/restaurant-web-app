@@ -137,6 +137,24 @@ test('api sends security headers and rejects oversized json payload', async ({ r
   expect(response.status()).toBe(400);
 });
 
+test('api locks out repeated failed admin logins with 429 and Retry-After', async ({ request }) => {
+  // Unique bogus username keeps this isolated from the real `admin` throttle key.
+  const username = `attacker-${Date.now()}`;
+  const attempt = () => request.post('/api/auth/admin/login', {
+    data: { username, password: 'wrong-password' }
+  });
+
+  // Default RESTAURANT_LOGIN_MAX_FAILURES=5: first 5 fail with 401, then locked.
+  for (let i = 0; i < 5; i += 1) {
+    const response = await attempt();
+    expect(response.status()).toBe(401);
+  }
+
+  const locked = await attempt();
+  expect(locked.status()).toBe(429);
+  expect(Number(locked.headers()['retry-after'])).toBeGreaterThan(0);
+});
+
 test('admin settings save to API-backed restaurant settings', async ({ page, request }) => {
   await loginAdmin(page);
 

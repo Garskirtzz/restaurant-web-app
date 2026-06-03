@@ -11,6 +11,7 @@ import re
 import secrets
 import sqlite3
 import threading
+import time
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 
@@ -73,6 +74,14 @@ APP_VERSION = os.environ.get("RESTAURANT_APP_VERSION", "local")
 SCHEMA_VERSION = 2
 DB_INITIALIZED = False
 DB_INIT_LOCK = threading.Lock()
+
+# Brute-force protection: lock a (client, role, username) key after too many
+# failed logins inside a sliding window. Successful login clears the key.
+LOGIN_MAX_FAILURES = positive_int_env("RESTAURANT_LOGIN_MAX_FAILURES", 5)
+LOGIN_FAILURE_WINDOW_SECONDS = positive_int_env("RESTAURANT_LOGIN_FAILURE_WINDOW_SECONDS", 15 * 60)
+# Burst protection for abusable write endpoints (register, order creation).
+RATE_LIMIT_MAX = positive_int_env("RESTAURANT_RATE_LIMIT_MAX", 60)
+RATE_LIMIT_WINDOW_SECONDS = positive_int_env("RESTAURANT_RATE_LIMIT_WINDOW_SECONDS", 60)
 
 
 DEFAULT_CUSTOMERS = [
@@ -860,6 +869,67 @@ def make_session(db, user):
     return token, expires_at
 
 
+class SlidingWindowCounter:
+    """Thread-safe in-process sliding-window event counter.
+
+    State lives in memory, so this is per-process best-effort protection. On a
+    warm serverless instance it persists across requests; it is not shared
+    across separately scaled instances. Good enough as a first abuse barrier
+    for a small deployment; a shared store (DB/Redis) would be needed for
+    strict guarantees.
+    """
+
+    def __init__(self, max_events, window_seconds):
+        self.max_events = max_events
+        self.window_seconds = window_seconds
+        self._events = {}
+        self._lock = threading.Lock()
+
+    def _trim(self, key, now):
+        cutoff = now - self.window_seconds
+        events = [stamp for stamp in self._events.get(key, ()) if stamp > cutoff]
+        if events:
+            self._events[key] = events
+        else:
+            self._events.pop(key, None)
+        return events
+
+    def count(self, key, now=None):
+        now = time.monotonic() if now is None else now
+        with self._lock:
+            return len(self._trim(key, now))
+
+    def hit(self, key, now=None):
+        """Record an event. Returns (allowed, retry_after_seconds)."""
+        now = time.monotonic() if now is None else now
+        with self._lock:
+            events = self._trim(key, now)
+            if len(events) >= self.max_events:
+                retry_after = int(events[0] + self.window_seconds - now) + 1
+                return False, max(retry_after, 1)
+            events.append(now)
+            self._events[key] = events
+            return True, 0
+
+    def blocked(self, key, now=None):
+        """Check without recording. Returns (blocked, retry_after_seconds)."""
+        now = time.monotonic() if now is None else now
+        with self._lock:
+            events = self._trim(key, now)
+            if len(events) >= self.max_events:
+                retry_after = int(events[0] + self.window_seconds - now) + 1
+                return True, max(retry_after, 1)
+            return False, 0
+
+    def reset(self, key):
+        with self._lock:
+            self._events.pop(key, None)
+
+
+LOGIN_THROTTLE = SlidingWindowCounter(LOGIN_MAX_FAILURES, LOGIN_FAILURE_WINDOW_SECONDS)
+RATE_LIMITER = SlidingWindowCounter(RATE_LIMIT_MAX, RATE_LIMIT_WINDOW_SECONDS)
+
+
 class RestaurantHandler(BaseHTTPRequestHandler):
     server_version = "RestaurantLocalAPI/1.0"
 
@@ -955,7 +1025,7 @@ class RestaurantHandler(BaseHTTPRequestHandler):
         if os.environ.get("VERCEL"):
             self.send_header("Strict-Transport-Security", "max-age=31536000; includeSubDomains; preload")
 
-    def json_response(self, payload, status=200):
+    def json_response(self, payload, status=200, extra_headers=None):
         body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
         self.send_response(status)
         self.add_cors_headers()
@@ -963,12 +1033,29 @@ class RestaurantHandler(BaseHTTPRequestHandler):
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Cache-Control", "no-store")
         self.send_header("X-Request-ID", self.get_request_id())
+        if extra_headers:
+            for header_name, header_value in extra_headers.items():
+                self.send_header(header_name, str(header_value))
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
         self.wfile.write(body)
 
     def error_response(self, message, status):
         self.json_response({"error": message, "requestId": self.get_request_id()}, status)
+
+    def too_many_requests(self, message, retry_after):
+        self.json_response(
+            {"error": message, "requestId": self.get_request_id()},
+            429,
+            {"Retry-After": int(retry_after)},
+        )
+
+    def get_client_ip(self):
+        forwarded = self.headers.get("X-Forwarded-For", "")
+        if forwarded:
+            return forwarded.split(",")[0].strip()
+
+        return self.client_address[0] if self.client_address else "unknown"
 
     def read_json(self):
         content_length = int(self.headers.get("Content-Length", "0") or 0)
@@ -1197,6 +1284,11 @@ class RestaurantHandler(BaseHTTPRequestHandler):
         self.wfile.write(content)
 
     def register_customer(self):
+        allowed, retry_after = RATE_LIMITER.hit(("register", self.get_client_ip()))
+        if not allowed:
+            self.too_many_requests("Terlalu banyak permintaan pendaftaran. Coba lagi nanti.", retry_after)
+            return
+
         payload = self.read_json()
         username = str(payload.get("username", "")).strip()
         password = str(payload.get("password", ""))
@@ -1238,12 +1330,20 @@ class RestaurantHandler(BaseHTTPRequestHandler):
         username = str(payload.get("username", "")).strip()
         password = str(payload.get("password", ""))
 
+        throttle_key = (expected_role, self.get_client_ip(), username.lower())
+        locked, retry_after = LOGIN_THROTTLE.blocked(throttle_key)
+        if locked:
+            self.too_many_requests("Terlalu banyak percobaan login gagal. Coba lagi nanti.", retry_after)
+            return
+
         with connect_db() as db:
             user = db.execute("SELECT * FROM users WHERE username = ? AND role = ?", (username, expected_role)).fetchone()
             if not user or not verify_password(password, user["password_hash"]):
+                LOGIN_THROTTLE.hit(throttle_key)
                 self.json_response({"error": "Username atau password salah"}, 401)
                 return
 
+            LOGIN_THROTTLE.reset(throttle_key)
             token, expires_at = make_session(db, user)
 
         self.json_response({"token": token, "expiresAt": expires_at, "user": public_user(user)})
@@ -1541,6 +1641,11 @@ class RestaurantHandler(BaseHTTPRequestHandler):
         self.json_response({"orders": orders})
 
     def create_order(self, user):
+        allowed, retry_after = RATE_LIMITER.hit(("order", user["id"]))
+        if not allowed:
+            self.too_many_requests("Terlalu banyak pesanan dalam waktu singkat. Coba lagi nanti.", retry_after)
+            return
+
         payload = self.read_json()
         items = payload.get("items")
 
@@ -1775,6 +1880,17 @@ def self_test():
     assert loaded_user and loaded_user["id"] == admin["id"]
     assert expired_user is None
     assert expired_session is None
+
+    limiter = SlidingWindowCounter(max_events=3, window_seconds=60)
+    assert limiter.hit("k", now=0) == (True, 0)
+    assert limiter.hit("k", now=1)[0] is True
+    assert limiter.hit("k", now=2)[0] is True
+    blocked, retry_after = limiter.hit("k", now=3)
+    assert blocked is False and retry_after >= 1
+    assert limiter.blocked("k", now=3)[0] is True
+    assert limiter.blocked("k", now=61)[0] is False  # window slid past first events
+    limiter.reset("k")
+    assert limiter.count("k", now=61) == 0
     print("Self-test OK")
 
 
