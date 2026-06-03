@@ -104,11 +104,36 @@
         });
     }
 
-    // Applies per-domain branding: sets document.title and fills any element
-    // marked with [data-brand-name]. Resolves the brand by hostname, falling
-    // back to `defaults` for unknown hosts (e.g. localhost).
-    function applyBranding(brandMap, defaults) {
-        const brand = (brandMap && brandMap[window.location.hostname]) || defaults;
+    // Resolves the active brand from a branding config for the current hostname.
+    // Order: exact byHost match, then the first substring matcher, then DEFAULT.
+    function resolveBrand(branding) {
+        if (!branding) {
+            return null;
+        }
+
+        const host = window.location.hostname;
+
+        if (branding.byHost && branding.byHost[host]) {
+            return branding.byHost[host];
+        }
+
+        if (Array.isArray(branding.matchers)) {
+            const matched = branding.matchers.find(function (matcher) {
+                return matcher && matcher.includes && host.includes(matcher.includes);
+            });
+
+            if (matched) {
+                return matched.brand;
+            }
+        }
+
+        return branding.DEFAULT || null;
+    }
+
+    // Applies per-domain branding: sets document.title and fills every element
+    // marked with [data-brand-name]. Unknown hosts fall back to DEFAULT.
+    function applyBranding(branding) {
+        const brand = resolveBrand(branding);
 
         if (!brand) {
             return;
@@ -138,6 +163,7 @@
         normalizeTableKey,
         formatTableNumber,
         delegateActions,
+        resolveBrand,
         applyBranding
     };
 })();

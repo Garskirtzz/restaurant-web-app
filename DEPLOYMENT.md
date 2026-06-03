@@ -69,26 +69,20 @@ Langkah:
 2. Set `RESTAURANT_ALLOWED_ORIGINS` ke kedua origin, dipisah koma, lalu redeploy:
 
    ```text
-   RESTAURANT_ALLOWED_ORIGINS=https://brand-a.example.com,https://brand-b.example.com
+   RESTAURANT_ALLOWED_ORIGINS=https://warkop-kentjana.example.com,https://warkop-balap.example.com
    ```
 
-3. Atur nama/judul brand per domain di `assets/js/brand-config.js`:
+3. Branding sudah diatur di `assets/js/brand-config.js` untuk dua brand: **Warkop Kentjana** dan **Warkop Balap**. Resolusinya berurutan:
+   - `byHost` — kecocokan hostname eksak (isi bila domain final tidak mengandung kata brand).
+   - `matchers` — kecocokan substring; sudah berisi `kentjana` dan `balap`, jadi branding otomatis benar di domain apa pun yang memuat kata itu (mis. `warkop-kentjana.vercel.app` atau domain custom nanti).
+   - `DEFAULT` — fallback (mis. localhost saat tes), tetap "Menu Digital Restoran".
 
-   ```js
-   window.RestaurantBranding = {
-       DEFAULT: { name: 'Menu Digital Restoran', title: 'Menu Digital Restoran' },
-       byHost: {
-           'brand-a.example.com': { name: 'Resto A', title: 'Resto A - Menu Digital' },
-           'brand-b.example.com': { name: 'Resto B', title: 'Resto B - Menu Digital' }
-       }
-   };
-   ```
-
-   Hostname yang tidak terdaftar (termasuk localhost) memakai `DEFAULT`, jadi perilaku lama tidak berubah. Branding diterapkan ke elemen ber-atribut `data-brand-name` dan ke `document.title`.
+   Branding diterapkan ke elemen ber-atribut `data-brand-name` dan ke `document.title`. Jika nama domain final tidak memuat kata brand, tambahkan entri eksak di `byHost`.
 
 Catatan:
 - Karena data dibagi, pengaturan di tabel `restaurant_settings` juga dibagi. Nama brand yang tampil di halaman publik diambil dari `brand-config.js` (per domain), bukan dari settings.
 - Auth tetap memakai token di `localStorage` (per domain). Cookie HttpOnly tidak dipakai karena tidak praktis dibagi lintas domain.
+- Cukup satu Vercel project dengan dua domain terpasang (benar-benar satu server). Supabase tetap satu database bersama.
 
 ## Local Smoke Test
 

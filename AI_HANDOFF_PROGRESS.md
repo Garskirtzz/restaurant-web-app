@@ -375,16 +375,19 @@ Current status note:
 
 ### Deployment Target: Two Brands, One Server (Shared Data)
 
-The intended deployment is two brands on two different domains, sharing one
-server, API, database, menu, orders, and admin. Status:
+The intended deployment is two brands — **Warkop Kentjana** and **Warkop Balap** —
+on two different domains, sharing one Vercel project, API, Supabase database,
+menu, orders, and admin. Status:
 
-- Done: per-domain branding mechanism (`assets/js/brand-config.js` + `applyBranding`)
-  swaps the public name/title by hostname, defaulting to the current name for
-  unknown hosts. CORS already supports multiple origins via comma-separated
-  `RESTAURANT_ALLOWED_ORIGINS`. See `DEPLOYMENT.md` > "Dua Brand, Satu Server".
-- Pending (needs the real domains, ties into Priority 2): add both domains in
-  Vercel, set `RESTAURANT_ALLOWED_ORIGINS` to both, and fill `brand-config.js`
-  `byHost` with the two hostnames/names.
+- Done: per-domain branding (`assets/js/brand-config.js` + `applyBranding`/`resolveBrand`)
+  resolves the brand by exact `byHost`, then substring `matchers` (already set for
+  `kentjana` and `balap`), then `DEFAULT`. So branding works automatically on any
+  domain containing the brand word; unknown hosts (localhost/tests) keep the default.
+  CORS already supports multiple origins via comma-separated `RESTAURANT_ALLOWED_ORIGINS`.
+  See `DEPLOYMENT.md` > "Dua Brand, Satu Server".
+- Pending (needs the real domains, ties into Priority 2): add both domains to the one
+  Vercel project, set `RESTAURANT_ALLOWED_ORIGINS` to both. Only if a final domain does
+  NOT contain the brand word, add an exact entry under `brand-config.js` `byHost`.
 - Not multi-tenant: data is shared between the two brands by design.
 
 ### Priority 1: Final Branding and Real Restaurant Content

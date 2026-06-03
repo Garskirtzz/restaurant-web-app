@@ -158,19 +158,29 @@ test('api locks out repeated failed admin logins with 429 and Retry-After', asyn
 test('per-domain branding swaps the visible name and title', async ({ page }) => {
   await page.goto('/index.html');
 
-  // Default (unknown host) keeps the original brand.
+  // Default (unknown host, no matcher) keeps the original brand.
   await expect(page.locator('.nav-brand h1')).toHaveText('Menu Digital Restoran');
 
-  // A configured host overrides the brand name and document title.
+  // Exact byHost match wins.
   await page.evaluate(() => {
-    window.RestaurantUtils.applyBranding(
-      { [window.location.hostname]: { name: 'Resto B', title: 'Resto B - Menu' } },
-      window.RestaurantBranding.DEFAULT
-    );
+    window.RestaurantUtils.applyBranding({
+      DEFAULT: { name: 'Menu Digital Restoran', title: 'Menu Digital Restoran' },
+      byHost: { [window.location.hostname]: { name: 'Warkop Kentjana', title: 'Warkop Kentjana' } }
+    });
   });
+  await expect(page.locator('.nav-brand h1')).toHaveText('Warkop Kentjana');
+  await expect(page).toHaveTitle('Warkop Kentjana');
 
-  await expect(page.locator('.nav-brand h1')).toHaveText('Resto B');
-  await expect(page).toHaveTitle('Resto B - Menu');
+  // Substring matcher resolves the brand when there is no exact host entry.
+  await page.evaluate(() => {
+    window.RestaurantUtils.applyBranding({
+      DEFAULT: { name: 'Menu Digital Restoran', title: 'Menu Digital Restoran' },
+      byHost: {},
+      matchers: [{ includes: window.location.hostname, brand: { name: 'Warkop Balap', title: 'Warkop Balap' } }]
+    });
+  });
+  await expect(page.locator('.nav-brand h1')).toHaveText('Warkop Balap');
+  await expect(page).toHaveTitle('Warkop Balap');
 });
 
 test('served pages use a strict script CSP without inline handlers', async ({ page, request }) => {

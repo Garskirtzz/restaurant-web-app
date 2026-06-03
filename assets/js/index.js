@@ -31,7 +31,7 @@
         // Initialize
         document.addEventListener('DOMContentLoaded', async function () {
             window.RestaurantUtils.delegateActions(document, INDEX_ACTIONS);
-            window.RestaurantUtils.applyBranding(window.RestaurantBranding.byHost, window.RestaurantBranding.DEFAULT);
+            window.RestaurantUtils.applyBranding(window.RestaurantBranding);
             apiAvailable = await RestaurantAPI.isAvailable();
             await hydrateCustomerSession();
             loadCartFromStorage();
