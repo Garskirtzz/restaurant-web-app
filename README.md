@@ -1,13 +1,13 @@
 # Restaurant Web App
 
-Aplikasi restoran lokal dengan halaman customer, panel admin, backend Python/SQLite, dan smoke test Playwright.
+Aplikasi restoran dengan halaman customer, panel admin, backend Python, SQLite lokal, Supabase Postgres untuk deploy, dan smoke test Playwright.
 
 ## Status Project
 
 Project ini sudah siap untuk pengembangan lokal yang rapi:
 
 - Frontend dipisah menjadi HTML, CSS, dan modul JavaScript per domain.
-- Backend lokal memakai Python standard library dan SQLite.
+- Backend lokal memakai SQLite, sementara deploy Vercel dapat memakai Supabase Postgres melalui `DATABASE_URL`.
 - Admin dan customer flow sudah terhubung ke API saat server aktif.
 - Smoke test Playwright tersedia untuk cek halaman publik, login modal, login admin, dan pengaturan restoran.
 
@@ -31,7 +31,7 @@ assets/js/admin-orders.js   Dashboard dan status pesanan
 assets/js/admin-reports.js  Laporan dan Best Seller chart
 assets/js/admin-menu.js     Manajemen menu
 assets/js/admin-customer.js Riwayat dan pembuatan pesanan customer
-server/app.py               Backend API lokal
+server/app.py               Backend API SQLite/Supabase Postgres
 tests/smoke.spec.js         Smoke test Playwright
 DEPLOYMENT.md               Panduan deploy Vercel
 RELEASE_CHECKLIST.md        Checklist QA sebelum publikasi
@@ -63,7 +63,7 @@ npx playwright install chromium
 python server/app.py --self-test
 ```
 
-`server/restaurant.db` akan dibuat otomatis saat backend dijalankan. File database lokal diabaikan oleh Git.
+`server/restaurant.db` akan dibuat otomatis saat backend dijalankan tanpa `DATABASE_URL`. File database lokal diabaikan oleh Git.
 
 ## Menjalankan Aplikasi
 
@@ -133,9 +133,9 @@ Database test dan artefak test diabaikan oleh Git.
 
 ## Deploy ke Vercel
 
-Project ini sudah punya adapter Vercel Python Function di `api/index.py` dan konfigurasi `vercel.json`. Baca [DEPLOYMENT.md](DEPLOYMENT.md) sebelum deploy.
+Project ini sudah punya adapter Vercel Python Function di `api/index.py`, konfigurasi `vercel.json`, dan dukungan Supabase Postgres. Baca [DEPLOYMENT.md](DEPLOYMENT.md) sebelum deploy.
 
-Catatan penting: SQLite lokal di Vercel bersifat demo/ephemeral jika tidak memakai database eksternal. Untuk data order/customer permanen, siapkan database eksternal dan adapter database sebelum production.
+Catatan penting: isi `DATABASE_URL` dari Supabase Transaction Pooler di Vercel agar data order/customer permanen. Jika `DATABASE_URL` kosong, SQLite di Vercel hanya demo/ephemeral.
 
 Sebelum publikasi, jalankan checklist di [RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md).
 

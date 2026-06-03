@@ -25,18 +25,20 @@ Gunakan checklist ini sebelum publikasi demo atau production.
 - [ ] Token logout dicabut dari server.
 - [ ] Endpoint mutasi membutuhkan token sesuai role.
 - [ ] File `.env` tidak masuk Git.
+- [ ] `DATABASE_URL` Supabase tidak pernah ditulis di source code.
+- [ ] RLS/revokasi akses Supabase untuk schema aplikasi sudah ditinjau sebelum production publik.
 
 ## Data
 
 - [ ] SQLite lokal sudah dibackup jika masih dipakai untuk development.
-- [ ] Untuk production, database persisten eksternal sudah disiapkan.
+- [ ] Untuk production, `DATABASE_URL` Supabase Transaction Pooler sudah disiapkan.
 - [ ] Strategi migrasi data order/customer sudah jelas.
 
 ## Vercel
 
 - [ ] Environment variable Vercel sudah diisi.
 - [ ] `/api/health` mengembalikan `ok: true`.
-- [ ] `storageMode` dipahami: `ephemeral` berarti hanya demo, bukan data permanen.
+- [ ] `storageMode` bernilai `persistent` dan `database` bernilai `postgres:restaurant_app`.
 - [ ] Domain production sudah dimasukkan ke `RESTAURANT_ALLOWED_ORIGINS`.
 
 ## Post Release

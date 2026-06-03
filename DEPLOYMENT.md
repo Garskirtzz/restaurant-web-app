@@ -10,9 +10,7 @@ Vercel cocok untuk:
 - Menjalankan API Python melalui Vercel Functions di folder `api/`.
 - Preview publik gratis untuk validasi UI dan demo.
 
-Vercel tidak cocok untuk menyimpan SQLite lokal sebagai database production permanen. Saat berjalan di Vercel tanpa `RESTAURANT_DB_PATH`, backend memakai `/tmp/restaurant.db` agar function bisa berjalan, tetapi data dapat hilang saat instance serverless dibuat ulang.
-
-Untuk production yang menyimpan order/customer/menu secara permanen, pindahkan database ke provider eksternal seperti Postgres/Neon/Supabase/Turso dan buat adapter database baru.
+Vercel tidak cocok untuk menyimpan SQLite lokal sebagai database production permanen. Untuk data order/customer/menu yang persisten, gunakan Supabase Postgres melalui `DATABASE_URL`.
 
 ## File Deployment
 
@@ -35,9 +33,12 @@ RESTAURANT_PASSWORD_ITERATIONS=210000
 RESTAURANT_ALLOWED_ORIGINS=https://your-project.vercel.app
 RESTAURANT_MAX_JSON_BODY_BYTES=131072
 RESTAURANT_APP_VERSION=production
+RESTAURANT_DB_SCHEMA=restaurant_app
+RESTAURANT_DB_SSLMODE=require
+DATABASE_URL=postgres://postgres.project-ref:<password>@aws-0-region.pooler.supabase.com:6543/postgres
 ```
 
-Jangan set `RESTAURANT_DB_PATH` di Vercel kecuali sudah memakai storage persisten yang benar-benar tersedia. Untuk demo Vercel, biarkan kosong.
+Ambil `DATABASE_URL` dari Supabase Dashboard > Connect > Transaction pooler. Jangan set `RESTAURANT_DB_PATH` di Vercel kecuali sudah memakai storage persisten yang benar-benar tersedia. Jika `DATABASE_URL` kosong, Vercel hanya berjalan sebagai demo ephemeral.
 
 ## Deploy
 
@@ -47,6 +48,7 @@ Jangan set `RESTAURANT_DB_PATH` di Vercel kecuali sudah memakai storage persiste
 4. Isi environment variable di atas.
 5. Deploy.
 6. Buka `/api/health` dan pastikan response `ok: true`.
+7. Pastikan `storageMode` bernilai `persistent` dan `database` bernilai `postgres:restaurant_app`.
 
 ## Local Smoke Test
 

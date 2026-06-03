@@ -1,6 +1,6 @@
 # Backend Lokal Restoran
 
-Backend lokal memakai Python standard library dan SQLite tanpa dependency eksternal.
+Backend lokal memakai SQLite tanpa dependency eksternal saat `DATABASE_URL` kosong. Saat `DATABASE_URL` diisi, backend memakai Supabase Postgres melalui `psycopg2-binary`.
 
 ## Menjalankan
 
@@ -30,7 +30,25 @@ Database lokal dibuat otomatis di:
 server/restaurant.db
 ```
 
-Saat berjalan di Vercel tanpa `RESTAURANT_DB_PATH`, database demo dibuat di `/tmp/restaurant.db`. Mode ini tidak persisten dan hanya cocok untuk preview.
+Saat berjalan di Vercel, isi `DATABASE_URL` dengan Supabase Transaction Pooler agar data persisten. Jika `DATABASE_URL` kosong dan tidak ada `RESTAURANT_DB_PATH`, database demo dibuat di `/tmp/restaurant.db`; mode ini tidak persisten dan hanya cocok untuk preview.
+
+## Supabase Postgres
+
+Gunakan connection string Transaction Pooler dari Supabase Dashboard > Connect > Transaction pooler, lalu simpan sebagai environment variable:
+
+```powershell
+$env:DATABASE_URL="postgres://postgres.project-ref:password@aws-0-region.pooler.supabase.com:6543/postgres"
+$env:RESTAURANT_DB_SCHEMA="restaurant_app"
+python server/app.py --self-test
+python server/app.py
+```
+
+Catatan:
+
+- Gunakan Transaction Pooler untuk Vercel/serverless.
+- Jangan commit password database ke repository.
+- Schema aplikasi dibuat di `restaurant_app`, bukan `public`, agar tabel tidak menjadi permukaan publik utama.
+- `RESTAURANT_DB_SSLMODE` default-nya `require`.
 
 ## Akun seed
 
