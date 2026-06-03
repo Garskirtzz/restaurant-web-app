@@ -238,7 +238,7 @@ const ADMIN_CREDENTIALS = {
             if (!tbody) return;
 
             const row = document.createElement('tr');
-            row.innerHTML = `<td colspan="${colspan}" style="text-align:center; color: var(--text-muted);">${escapeHTML(message)}</td>`;
+            row.innerHTML = `<td class="empty-table-cell" colspan="${colspan}">${escapeHTML(message)}</td>`;
             tbody.appendChild(row);
         }
 

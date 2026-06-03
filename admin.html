@@ -9,6 +9,39 @@
 </head>
 
 <body class="state-login">
+    <svg class="icon-sprite" aria-hidden="true" focusable="false">
+        <symbol id="icon-eye" viewBox="0 0 24 24">
+            <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"></path>
+            <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"></path>
+        </symbol>
+        <symbol id="icon-dashboard" viewBox="0 0 24 24">
+            <path d="M4 4h7v7H4V4ZM13 4h7v4h-7V4ZM13 10h7v10h-7V10ZM4 13h7v7H4v-7Z"></path>
+        </symbol>
+        <symbol id="icon-menu" viewBox="0 0 24 24">
+            <path d="M4 7h16M4 12h16M4 17h16"></path>
+        </symbol>
+        <symbol id="icon-table" viewBox="0 0 24 24">
+            <path d="M4 8h16M6 8v12M18 8v12M5 4h14v4H5V4Z"></path>
+        </symbol>
+        <symbol id="icon-report" viewBox="0 0 24 24">
+            <path d="M4 19h16M6 16l4-5 4 3 5-8"></path>
+        </symbol>
+        <symbol id="icon-settings" viewBox="0 0 24 24">
+            <path d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8Z"></path>
+            <path d="M12 2v3M12 19v3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M2 12h3M19 12h3M4.9 19.1 7 17M17 7l2.1-2.1"></path>
+        </symbol>
+        <symbol id="icon-orders" viewBox="0 0 24 24">
+            <path d="M7 3h8l4 4v18H7V3Z"></path>
+            <path d="M15 3v5h5M10 12h7M10 16h7M10 20h4"></path>
+        </symbol>
+        <symbol id="icon-user" viewBox="0 0 24 24">
+            <path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z"></path>
+            <path d="M4 21a8 8 0 0 1 16 0"></path>
+        </symbol>
+        <symbol id="icon-plus" viewBox="0 0 24 24">
+            <path d="M12 5v14M5 12h14"></path>
+        </symbol>
+    </svg>
     <!-- Login Page -->
     <div id="login-page" class="login-container">
         <div class="login-form">
@@ -27,7 +60,9 @@
                 <div class="form-group">
                     <label for="user-password">Password</label>
                     <input type="password" id="user-password" placeholder="Masukkan password">
-                    <button class="password-toggle" onclick="togglePassword('user-password')">👁️</button>
+                    <button type="button" class="password-toggle" onclick="togglePassword('user-password')" aria-label="Tampilkan password">
+                        <svg class="ui-icon" aria-hidden="true"><use href="#icon-eye"></use></svg>
+                    </button>
                 </div>
                 <button class="login-btn" onclick="userLogin()">Login</button>
                 <div id="user-login-error" class="error-message">Username atau password salah!</div>
@@ -41,7 +76,9 @@
                 <div class="form-group">
                     <label for="admin-password">Password Admin</label>
                     <input type="password" id="admin-password" placeholder="Masukkan password admin">
-                    <button class="password-toggle" onclick="togglePassword('admin-password')">👁️</button>
+                    <button type="button" class="password-toggle" onclick="togglePassword('admin-password')" aria-label="Tampilkan password admin">
+                        <svg class="ui-icon" aria-hidden="true"><use href="#icon-eye"></use></svg>
+                    </button>
                 </div>
                 <button class="login-btn" onclick="adminLogin()">Login Admin</button>
                 <div id="admin-login-error" class="error-message">Username atau password admin salah!</div>
@@ -63,11 +100,11 @@
         <div class="container">
             <aside class="sidebar">
                 <ul class="sidebar-menu">
-                    <li><a href="#dashboard" class="active"><i>📊</i> Dashboard</a></li>
-                    <li><a href="#menu"><i>🍽️</i> Manajemen Menu</a></li>
-                    <li><a href="#tables"><i>🪑</i> Manajemen Meja</a></li>
-                    <li><a href="#reports"><i>📈</i> Laporan</a></li>
-                    <li><a href="#settings"><i>⚙️</i> Pengaturan</a></li>
+                    <li><a href="#dashboard" class="active"><svg class="ui-icon" aria-hidden="true"><use href="#icon-dashboard"></use></svg> Dashboard</a></li>
+                    <li><a href="#menu"><svg class="ui-icon" aria-hidden="true"><use href="#icon-menu"></use></svg> Manajemen Menu</a></li>
+                    <li><a href="#tables"><svg class="ui-icon" aria-hidden="true"><use href="#icon-table"></use></svg> Manajemen Meja</a></li>
+                    <li><a href="#reports"><svg class="ui-icon" aria-hidden="true"><use href="#icon-report"></use></svg> Laporan</a></li>
+                    <li><a href="#settings"><svg class="ui-icon" aria-hidden="true"><use href="#icon-settings"></use></svg> Pengaturan</a></li>
                 </ul>
             </aside>
 
@@ -306,10 +343,10 @@
         <div class="container">
             <aside class="sidebar">
                 <ul class="sidebar-menu">
-                    <li><a href="#user-dashboard" class="active"><i>📊</i> Dashboard</a></li>
-                    <li><a href="#user-orders"><i>📝</i> Pesanan Saya</a></li>
-                    <li><a href="#user-profile"><i>👤</i> Profil</a></li>
-                    <li><a href="#new-order"><i>➕</i> Pesan Baru</a></li>
+                    <li><a href="#user-dashboard" class="active"><svg class="ui-icon" aria-hidden="true"><use href="#icon-dashboard"></use></svg> Dashboard</a></li>
+                    <li><a href="#user-orders"><svg class="ui-icon" aria-hidden="true"><use href="#icon-orders"></use></svg> Pesanan Saya</a></li>
+                    <li><a href="#user-profile"><svg class="ui-icon" aria-hidden="true"><use href="#icon-user"></use></svg> Profil</a></li>
+                    <li><a href="#new-order"><svg class="ui-icon" aria-hidden="true"><use href="#icon-plus"></use></svg> Pesan Baru</a></li>
                 </ul>
             </aside>
 
