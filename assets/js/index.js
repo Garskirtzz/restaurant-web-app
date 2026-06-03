@@ -276,6 +276,27 @@
             showToast('Item dihapus dari keranjang');
         }
 
+        function updateCartItemQuantityByIndex(index, newQuantity) {
+            const item = cart[index];
+
+            if (!item) {
+                return;
+            }
+
+            updateCartItemQuantity(item.name, newQuantity);
+        }
+
+        function removeCartItemByIndex(index) {
+            if (!cart[index]) {
+                return;
+            }
+
+            cart.splice(index, 1);
+            saveCartToStorage();
+            updateCartUI();
+            showToast('Item dihapus dari keranjang');
+        }
+
         function clearCart() {
             cart = [];
             saveCartToStorage();
@@ -456,23 +477,25 @@
             }
 
             cartItemsContainer.innerHTML = '';
-            cart.forEach(item => {
-                const itemTotal = item.price * item.quantity;
+            cart.forEach((item, index) => {
+                const price = Number(item.price || 0);
+                const quantity = Number(item.quantity || 0);
+                const itemTotal = price * quantity;
                 const cartItemElement = document.createElement('div');
                 cartItemElement.className = 'cart-item';
                 cartItemElement.innerHTML = `
                     <div class="cart-item-info">
-                        <div class="cart-item-name">${item.name}</div>
-                        <div class="cart-item-price">Rp${item.price.toLocaleString('id-ID')} x ${item.quantity}</div>
+                        <div class="cart-item-name">${escapeHtml(item.name)}</div>
+                        <div class="cart-item-price">Rp${price.toLocaleString('id-ID')} x ${quantity}</div>
                         <div class="cart-item-quantity">
-                            <button class="quantity-btn" onclick="updateCartItemQuantity('${item.name}', ${item.quantity - 1})">-</button>
-                            <span>${item.quantity}</span>
-                            <button class="quantity-btn" onclick="updateCartItemQuantity('${item.name}', ${item.quantity + 1})">+</button>
+                            <button class="quantity-btn" onclick="updateCartItemQuantityByIndex(${index}, ${quantity - 1})">-</button>
+                            <span>${quantity}</span>
+                            <button class="quantity-btn" onclick="updateCartItemQuantityByIndex(${index}, ${quantity + 1})">+</button>
                         </div>
                     </div>
                     <div class="cart-item-actions">
                         <div class="cart-item-total">Rp${itemTotal.toLocaleString('id-ID')}</div>
-                        <button class="cart-item-remove" onclick="removeCartItem('${item.name}')">×</button>
+                        <button class="cart-item-remove" onclick="removeCartItemByIndex(${index})">×</button>
                     </div>
                 `;
                 cartItemsContainer.appendChild(cartItemElement);
