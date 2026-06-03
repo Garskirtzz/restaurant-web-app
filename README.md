@@ -108,10 +108,12 @@ $env:RESTAURANT_ADMIN_USERNAME="admin"
 $env:RESTAURANT_ADMIN_PASSWORD="password-yang-lebih-kuat"
 $env:RESTAURANT_SESSION_TTL_SECONDS="86400"
 $env:RESTAURANT_PASSWORD_ITERATIONS="210000"
+$env:RESTAURANT_ALLOWED_ORIGINS="http://127.0.0.1:8000"
+$env:RESTAURANT_MAX_JSON_BODY_BYTES="131072"
 python server/app.py
 ```
 
-Jika `RESTAURANT_ADMIN_PASSWORD` diisi, seed admin lokal akan diperbarui saat database diinisialisasi. Jangan commit credential production ke repository.
+Jika `RESTAURANT_ADMIN_PASSWORD` diisi, seed admin lokal akan diperbarui saat database diinisialisasi. Saat deploy, batasi `RESTAURANT_ALLOWED_ORIGINS` ke origin frontend yang valid. Jangan commit credential production ke repository.
 
 ## Menjalankan Test
 

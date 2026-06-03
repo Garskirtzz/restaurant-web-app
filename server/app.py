@@ -27,6 +27,11 @@ def positive_int_env(name, default):
     return value if value > 0 else default
 
 
+def csv_env(name, default):
+    raw_value = os.environ.get(name, default)
+    return {item.strip() for item in raw_value.split(",") if item.strip()}
+
+
 ADMIN_USERNAME = os.environ.get("RESTAURANT_ADMIN_USERNAME", "admin").strip() or "admin"
 ADMIN_PASSWORD = os.environ.get("RESTAURANT_ADMIN_PASSWORD", "password123")
 ADMIN_PASSWORD_FROM_ENV = "RESTAURANT_ADMIN_PASSWORD" in os.environ
@@ -34,6 +39,8 @@ PASSWORD_SCHEME = "pbkdf2_sha256"
 PASSWORD_ITERATIONS = positive_int_env("RESTAURANT_PASSWORD_ITERATIONS", 210000)
 LEGACY_PASSWORD_ITERATIONS = 120000
 SESSION_TTL_SECONDS = positive_int_env("RESTAURANT_SESSION_TTL_SECONDS", 60 * 60 * 24)
+MAX_JSON_BODY_BYTES = positive_int_env("RESTAURANT_MAX_JSON_BODY_BYTES", 128 * 1024)
+ALLOWED_ORIGINS = csv_env("RESTAURANT_ALLOWED_ORIGINS", "*")
 
 
 DEFAULT_CUSTOMERS = [
@@ -494,6 +501,7 @@ class RestaurantHandler(BaseHTTPRequestHandler):
     def do_OPTIONS(self):
         self.send_response(204)
         self.add_cors_headers()
+        self.add_security_headers()
         self.end_headers()
 
     def do_GET(self):
@@ -535,15 +543,28 @@ class RestaurantHandler(BaseHTTPRequestHandler):
         print("[%s] %s" % (datetime.now().strftime("%H:%M:%S"), format_string % args))
 
     def add_cors_headers(self):
-        self.send_header("Access-Control-Allow-Origin", "*")
+        origin = self.headers.get("Origin", "")
+        if "*" in ALLOWED_ORIGINS:
+            self.send_header("Access-Control-Allow-Origin", "*")
+        elif origin in ALLOWED_ORIGINS:
+            self.send_header("Access-Control-Allow-Origin", origin)
+            self.send_header("Vary", "Origin")
+
         self.send_header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
         self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization")
+
+    def add_security_headers(self):
+        self.send_header("X-Content-Type-Options", "nosniff")
+        self.send_header("X-Frame-Options", "DENY")
+        self.send_header("Referrer-Policy", "strict-origin-when-cross-origin")
 
     def json_response(self, payload, status=200):
         body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
         self.send_response(status)
         self.add_cors_headers()
+        self.add_security_headers()
         self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Cache-Control", "no-store")
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
         self.wfile.write(body)
@@ -552,6 +573,9 @@ class RestaurantHandler(BaseHTTPRequestHandler):
         content_length = int(self.headers.get("Content-Length", "0") or 0)
         if content_length == 0:
             return {}
+
+        if content_length > MAX_JSON_BODY_BYTES:
+            raise ValueError(f"Request body maksimal {MAX_JSON_BODY_BYTES} bytes")
 
         raw_body = self.rfile.read(content_length).decode("utf-8")
         try:
@@ -738,7 +762,12 @@ class RestaurantHandler(BaseHTTPRequestHandler):
         content_type, _ = mimetypes.guess_type(str(target))
         content = target.read_bytes()
         self.send_response(200)
+        self.add_security_headers()
         self.send_header("Content-Type", content_type or "application/octet-stream")
+        if target.suffix.lower() == ".html":
+            self.send_header("Cache-Control", "no-store")
+        else:
+            self.send_header("Cache-Control", "public, max-age=3600")
         self.send_header("Content-Length", str(len(content)))
         self.end_headers()
         self.wfile.write(content)
@@ -1302,6 +1331,8 @@ def self_test():
     assert tables >= 8
     assert settings is not None
     assert "expires_at" in session_columns
+    assert MAX_JSON_BODY_BYTES > 0
+    assert ALLOWED_ORIGINS
     assert token
     assert session is not None
     assert parse_utc_timestamp(expires_at) > utc_now_dt()

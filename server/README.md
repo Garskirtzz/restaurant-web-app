@@ -60,10 +60,14 @@ $env:RESTAURANT_ADMIN_USERNAME="admin"
 $env:RESTAURANT_ADMIN_PASSWORD="password-yang-lebih-kuat"
 $env:RESTAURANT_SESSION_TTL_SECONDS="86400"
 $env:RESTAURANT_PASSWORD_ITERATIONS="210000"
+$env:RESTAURANT_ALLOWED_ORIGINS="http://127.0.0.1:8000"
+$env:RESTAURANT_MAX_JSON_BODY_BYTES="131072"
 python server/app.py
 ```
 
 Jika `RESTAURANT_ADMIN_PASSWORD` diisi, password admin seed akan diperbarui saat server menginisialisasi database.
+
+Default CORS lokal masih mengizinkan semua origin (`*`) agar mudah dipakai saat development. Saat deploy, isi `RESTAURANT_ALLOWED_ORIGINS` dengan origin frontend yang valid, dipisahkan koma jika lebih dari satu.
 
 ## Endpoint awal
 

@@ -113,6 +113,26 @@ test('api rejects invalid menu payload before database write', async ({ request 
   expect(response.status()).toBe(400);
 });
 
+test('api sends security headers and rejects oversized json payload', async ({ request }) => {
+  const health = await request.get('/api/health');
+  expect(health.headers()['x-content-type-options']).toBe('nosniff');
+  expect(health.headers()['x-frame-options']).toBe('DENY');
+  expect(health.headers()['cache-control']).toBe('no-store');
+
+  const token = await requestAdminToken(request);
+  const response = await request.post('/api/menu', {
+    headers: { Authorization: `Bearer ${token}` },
+    data: {
+      name: 'Large Payload',
+      category: 'food',
+      price: 10000,
+      description: 'x'.repeat(140000)
+    }
+  });
+
+  expect(response.status()).toBe(400);
+});
+
 test('admin settings save to API-backed restaurant settings', async ({ page, request }) => {
   await loginAdmin(page);
 
