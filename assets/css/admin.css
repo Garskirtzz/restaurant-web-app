@@ -5,8 +5,9 @@
             --border-grey: #dee2e6;
             --text-dark: #212529;
             --text-muted: #6c757d;
-            --accent: #f45656;
-            --accent-hover: #d32f2f;
+            --accent: #212529;
+            --accent-hover: #343a40;
+            --danger: #d9534f;
             --radius-premium: 16px;
             --shadow-soft: 0 10px 30px rgba(0, 0, 0, 0.02);
         }
@@ -116,7 +117,7 @@
         }
 
         .error-message {
-            color: #f45656;
+            color: var(--danger);
             margin-top: 1rem;
             display: none;
         }
@@ -940,7 +941,7 @@
         }
 
         .error-message {
-            color: var(--accent-hover);
+            color: var(--danger);
         }
 
         .no-data-message {
