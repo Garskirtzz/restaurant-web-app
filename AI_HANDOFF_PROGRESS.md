@@ -32,6 +32,9 @@ Production health was last verified with:
 }
 ```
 
+Note: local schema is now v3 (admin audit log). Production still reports
+`schemaVersion: 2` until this code is deployed; after deploy it should report 3.
+
 ## Important Files
 
 - `index.html`: public customer menu page.
@@ -174,6 +177,7 @@ Completed:
   - Orders
   - Order status updates
   - Best-seller report
+  - Admin audit log (`GET /api/audit-log`)
 - Added API-backed authentication and sessions.
 - Added password hashing with PBKDF2 SHA-256.
 - Added payload validation and oversized JSON rejection.
@@ -249,12 +253,19 @@ restaurant_app.restaurant_settings    RLS on, 1 row
 restaurant_app.orders                 RLS on, 0 rows
 restaurant_app.order_items            RLS on, 0 rows
 restaurant_app.schema_migrations      RLS on, 2 rows
+restaurant_app.admin_audit_log        created on deploy of schema v3
 ```
 
 Security advisor note:
 - Supabase advisor reports `RLS Enabled No Policy` at INFO level.
 - This is expected in the current backend-only design.
 - Do not add broad policies for `anon` or `authenticated` unless the frontend is changed to use Supabase client directly.
+
+REQUIRED Supabase follow-up after deploying schema v3:
+- The `admin_audit_log` table is created by the app bootstrap, so it will NOT have RLS enabled automatically like the tables enabled via earlier Supabase migrations.
+- Schema-level grants for `anon`/`authenticated`/`public` are already revoked, so the table is not reachable by browser clients, but enable RLS for consistency and to satisfy the advisor:
+  - `ALTER TABLE restaurant_app.admin_audit_log ENABLE ROW LEVEL SECURITY;`
+- Record it as a Supabase migration (e.g., `enable_admin_audit_log_rls`). Supabase MCP was not connected in the session that added this feature, so this step is still pending.
 
 ### 8. Security Hardening
 
@@ -279,14 +290,17 @@ Added later (2026-06-04):
 - In-process rate limiting for register (per IP) and order creation (per user) via `SlidingWindowCounter`.
 - Failed-login lockout keyed by (IP, role, username); returns HTTP 429 with `Retry-After`. Successful login resets the counter.
 - Tunable via `RESTAURANT_LOGIN_MAX_FAILURES`, `RESTAURANT_LOGIN_FAILURE_WINDOW_SECONDS`, `RESTAURANT_RATE_LIMIT_MAX`, `RESTAURANT_RATE_LIMIT_WINDOW_SECONDS`.
-- Self-test covers limiter logic; Playwright covers the 429 lockout path.
+- Server-side admin audit log (`admin_audit_log` table, schema v3). Records settings update, menu/table CRUD, and order status changes with admin username, IP, and timestamp. Readable via `GET /api/audit-log` (admin only, `?limit=` up to 500).
+- Self-test covers limiter logic and audit table/index; Playwright covers the 429 lockout path and audit log recording.
 
 Security caveats:
 - Tokens are still stored in `localStorage`; acceptable for this prototype but not ideal for high-risk production.
 - Some inline `onclick` remains, so CSP still allows `'unsafe-inline'`.
 - Rate limiting/lockout state is in-memory and per-process, so on Vercel it is best-effort per warm instance, not shared across scaled instances. A shared store (DB/Redis) is needed for strict guarantees.
-- No server-side admin audit log yet.
 - No formal password reset flow yet.
+
+Deploy note for schema v3:
+- `SCHEMA_VERSION` was bumped from 2 to 3. On the next production deploy, `postgres_bootstrap_ready` sees the old version and re-runs the idempotent bootstrap, which creates `admin_audit_log` and re-runs `seed_user`. Because seeding uses `force_password=ADMIN_PASSWORD_FROM_ENV`, the admin password will be re-applied from `RESTAURANT_ADMIN_PASSWORD` if that env var is set. Keep that env var in sync with the intended admin password before deploying (see OPERATIONS.md section 2).
 
 ### 9. Testing and QA
 
@@ -403,11 +417,11 @@ Completed in `OPERATIONS.md`:
 Done:
 - Rate limiting for register (per IP) and order creation (per user).
 - Account lockout / cooldown after failed login attempts (per IP+role+username), returns 429 + Retry-After.
+- Server-side audit log for admin actions (`admin_audit_log`, schema v3, `GET /api/audit-log`).
 
 Still recommended:
 - Move auth tokens to secure HTTP-only cookies if the project becomes more serious.
 - Remove inline `onclick` and then tighten CSP by removing `'unsafe-inline'`.
-- Add server-side audit log for admin actions.
 - Add better error logging for production failures.
 - Add backup automation beyond manual Supabase backups.
 - Consider a shared-store (DB/Redis) limiter if strict cross-instance limits are needed (current limiter is in-memory per process).

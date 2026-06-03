@@ -150,6 +150,28 @@ LIMIT 50;
 
 ---
 
+## 4B. Audit Log Aksi Admin
+
+Setiap mutasi admin dicatat ke tabel `admin_audit_log`: update settings, CRUD menu, CRUD meja, dan perubahan status order. Tiap baris menyimpan `admin_user_id`, `admin_username`, `action`, `target_type`, `target_id`, `detail`, `ip`, dan `created_at`.
+
+Lihat via API (butuh token admin, default 100 entri terbaru, maksimal `?limit=500`):
+
+```powershell
+Invoke-RestMethod -Uri "https://project-hqcx7.vercel.app/api/audit-log?limit=50" `
+  -Headers @{ Authorization = "Bearer $($login.token)" } | ConvertTo-Json -Depth 6
+```
+
+Lihat langsung di database:
+
+```sql
+SELECT created_at, admin_username, action, target_type, target_id, detail, ip
+FROM restaurant_app.admin_audit_log
+ORDER BY created_at DESC
+LIMIT 50;
+```
+
+Nilai `action` yang dicatat: `settings.update`, `menu.create`, `menu.update`, `menu.delete`, `table.create`, `table.update`, `table.delete`, `order.status`.
+
 ## 5. Backup Supabase / Postgres
 
 ### 5A. Backup otomatis Supabase
@@ -306,7 +328,7 @@ Respons sehat:
 {
   "ok": true,
   "appVersion": "production",
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "database": "postgres:restaurant_app",
   "storageMode": "persistent",
   "users": 3

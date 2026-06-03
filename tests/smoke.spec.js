@@ -155,6 +155,37 @@ test('api locks out repeated failed admin logins with 429 and Retry-After', asyn
   expect(Number(locked.headers()['retry-after'])).toBeGreaterThan(0);
 });
 
+test('admin mutations are recorded in the audit log', async ({ request }) => {
+  const token = await requestAdminToken(request);
+  const headers = { Authorization: `Bearer ${token}` };
+
+  // Audit log requires an admin token.
+  const unauthorized = await request.get('/api/audit-log');
+  expect(unauthorized.status()).toBe(401);
+
+  const created = await request.post('/api/menu', {
+    headers,
+    data: {
+      name: `Audit Probe ${Date.now()}`,
+      category: 'food',
+      price: 12345
+    }
+  });
+  expect(created.status()).toBe(201);
+  const itemId = (await created.json()).item.id;
+
+  const auditResponse = await request.get('/api/audit-log', { headers });
+  expect(auditResponse.ok()).toBeTruthy();
+  const entries = (await auditResponse.json()).entries;
+  const match = entries.find(entry => entry.action === 'menu.create' && String(entry.target_id) === String(itemId));
+  expect(match).toBeTruthy();
+  expect(match.admin_username).toBe('admin');
+
+  // Cleanup the probe item.
+  const deleted = await request.delete(`/api/menu/${itemId}`, { headers });
+  expect(deleted.ok()).toBeTruthy();
+});
+
 test('admin settings save to API-backed restaurant settings', async ({ page, request }) => {
   await loginAdmin(page);
 
