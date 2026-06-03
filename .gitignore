@@ -5,6 +5,9 @@ server/*.db
 server/__pycache__/
 *.pyc
 
+test-results/
+playwright-report/
+
 .env
 .env.*
 *.log
