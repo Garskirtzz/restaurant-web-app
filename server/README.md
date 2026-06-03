@@ -30,6 +30,8 @@ Database lokal dibuat otomatis di:
 server/restaurant.db
 ```
 
+Saat berjalan di Vercel tanpa `RESTAURANT_DB_PATH`, database demo dibuat di `/tmp/restaurant.db`. Mode ini tidak persisten dan hanya cocok untuk preview.
+
 ## Akun seed
 
 Admin:
@@ -97,6 +99,8 @@ GET  /api/reports/best-seller?start=YYYY-MM-DD&end=YYYY-MM-DD
 ```
 
 Endpoint yang mengubah data admin membutuhkan token admin dari login. Endpoint order customer membutuhkan token customer. Token kadaluarsa sesuai `RESTAURANT_SESSION_TTL_SECONDS` dan bisa dicabut lewat `POST /api/auth/logout`.
+
+`GET /api/health` mengembalikan status API, versi aplikasi, versi schema, path database, dan `storageMode`.
 
 Header token:
 

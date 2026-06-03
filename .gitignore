@@ -2,6 +2,7 @@ node_modules/
 
 server/restaurant.db
 server/*.db
+server/backups/
 server/__pycache__/
 *.pyc
 
@@ -10,4 +11,5 @@ playwright-report/
 
 .env
 .env.*
+!.env.example
 *.log

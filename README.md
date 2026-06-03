@@ -33,6 +33,8 @@ assets/js/admin-menu.js     Manajemen menu
 assets/js/admin-customer.js Riwayat dan pembuatan pesanan customer
 server/app.py               Backend API lokal
 tests/smoke.spec.js         Smoke test Playwright
+DEPLOYMENT.md               Panduan deploy Vercel
+RELEASE_CHECKLIST.md        Checklist QA sebelum publikasi
 ```
 
 ## Prasyarat
@@ -128,6 +130,14 @@ server/.playwright-test.db
 ```
 
 Database test dan artefak test diabaikan oleh Git.
+
+## Deploy ke Vercel
+
+Project ini sudah punya adapter Vercel Python Function di `api/index.py` dan konfigurasi `vercel.json`. Baca [DEPLOYMENT.md](DEPLOYMENT.md) sebelum deploy.
+
+Catatan penting: SQLite lokal di Vercel bersifat demo/ephemeral jika tidak memakai database eksternal. Untuk data order/customer permanen, siapkan database eksternal dan adapter database sebelum production.
+
+Sebelum publikasi, jalankan checklist di [RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md).
 
 ## Alur Utama
 

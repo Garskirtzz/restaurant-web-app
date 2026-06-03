@@ -1,0 +1,10 @@
+.codex/
+.git/
+node_modules/
+test-results/
+playwright-report/
+server/*.db
+server/*.db-*
+server/__pycache__/
+api/__pycache__/
+admin - Copy.html

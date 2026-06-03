@@ -118,6 +118,10 @@ test('api sends security headers and rejects oversized json payload', async ({ r
   expect(health.headers()['x-content-type-options']).toBe('nosniff');
   expect(health.headers()['x-frame-options']).toBe('DENY');
   expect(health.headers()['cache-control']).toBe('no-store');
+  expect(health.headers()['x-request-id']).toBeTruthy();
+  const healthPayload = await health.json();
+  expect(healthPayload.schemaVersion).toBeGreaterThanOrEqual(2);
+  expect(healthPayload.storageMode).toBe('persistent');
 
   const token = await requestAdminToken(request);
   const response = await request.post('/api/menu', {

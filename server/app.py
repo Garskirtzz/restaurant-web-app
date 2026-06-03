@@ -15,7 +15,16 @@ from datetime import datetime, timedelta, timezone
 
 SERVER_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = SERVER_DIR.parent
-DB_PATH = Path(os.environ.get("RESTAURANT_DB_PATH", SERVER_DIR / "restaurant.db"))
+
+
+def default_db_path():
+    if os.environ.get("VERCEL") and "RESTAURANT_DB_PATH" not in os.environ:
+        return Path(os.environ.get("TMPDIR", "/tmp")) / "restaurant.db"
+
+    return SERVER_DIR / "restaurant.db"
+
+
+DB_PATH = Path(os.environ.get("RESTAURANT_DB_PATH") or default_db_path())
 
 
 def positive_int_env(name, default):
@@ -41,6 +50,8 @@ LEGACY_PASSWORD_ITERATIONS = 120000
 SESSION_TTL_SECONDS = positive_int_env("RESTAURANT_SESSION_TTL_SECONDS", 60 * 60 * 24)
 MAX_JSON_BODY_BYTES = positive_int_env("RESTAURANT_MAX_JSON_BODY_BYTES", 128 * 1024)
 ALLOWED_ORIGINS = csv_env("RESTAURANT_ALLOWED_ORIGINS", "*")
+APP_VERSION = os.environ.get("RESTAURANT_APP_VERSION", "local")
+SCHEMA_VERSION = 2
 
 
 DEFAULT_CUSTOMERS = [
@@ -285,12 +296,39 @@ def ensure_column(db, table_name, column_name, definition):
         db.execute(f"ALTER TABLE {table_name} ADD COLUMN {column_name} {definition}")
 
 
+def record_migration(db, version, name):
+    db.execute(
+        """
+        INSERT OR IGNORE INTO schema_migrations (version, name, applied_at)
+        VALUES (?, ?, ?)
+        """,
+        (version, name, utc_now()),
+    )
+
+
+def create_integrity_indexes(db):
+    db.executescript(
+        """
+        CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions(user_id);
+        CREATE INDEX IF NOT EXISTS idx_sessions_expires_at ON sessions(expires_at);
+        CREATE INDEX IF NOT EXISTS idx_users_role_created_at ON users(role, created_at);
+        CREATE INDEX IF NOT EXISTS idx_menu_items_category_available ON menu_items(category, available);
+        CREATE INDEX IF NOT EXISTS idx_orders_customer_user_id_timestamp ON orders(customer_user_id, timestamp);
+        CREATE INDEX IF NOT EXISTS idx_orders_status_timestamp ON orders(status, timestamp);
+        CREATE INDEX IF NOT EXISTS idx_order_items_order_id ON order_items(order_id);
+        """
+    )
+
+
 def migrate_schema(db):
     ensure_column(db, "sessions", "expires_at", "TEXT")
     db.execute(
         "UPDATE sessions SET expires_at = ? WHERE expires_at IS NULL OR expires_at = ''",
         (session_expiry(),),
     )
+    create_integrity_indexes(db)
+    record_migration(db, 1, "bootstrap_schema")
+    record_migration(db, 2, "session_expiry_and_integrity_indexes")
 
 
 def purge_expired_sessions(db):
@@ -325,7 +363,7 @@ def session_user(db, token):
 
 
 def init_db():
-    SERVER_DIR.mkdir(exist_ok=True)
+    DB_PATH.parent.mkdir(parents=True, exist_ok=True)
 
     with connect_db() as db:
         db.executescript(
@@ -404,6 +442,12 @@ def init_db():
                 quantity INTEGER NOT NULL,
                 subtotal INTEGER NOT NULL,
                 FOREIGN KEY(order_id) REFERENCES orders(id) ON DELETE CASCADE
+            );
+
+            CREATE TABLE IF NOT EXISTS schema_migrations (
+                version INTEGER PRIMARY KEY,
+                name TEXT NOT NULL,
+                applied_at TEXT NOT NULL
             );
             """
         )
@@ -511,36 +555,52 @@ class RestaurantHandler(BaseHTTPRequestHandler):
             else:
                 self.serve_static()
         except ValueError as error:
-            self.json_response({"error": str(error)}, 400)
+            self.error_response(str(error), 400)
         except Exception as error:
-            self.json_response({"error": str(error)}, 500)
+            self.log_error_detail(error)
+            self.error_response("Internal server error", 500)
 
     def do_POST(self):
         try:
             self.handle_api("POST")
         except ValueError as error:
-            self.json_response({"error": str(error)}, 400)
+            self.error_response(str(error), 400)
         except Exception as error:
-            self.json_response({"error": str(error)}, 500)
+            self.log_error_detail(error)
+            self.error_response("Internal server error", 500)
 
     def do_PUT(self):
         try:
             self.handle_api("PUT")
         except ValueError as error:
-            self.json_response({"error": str(error)}, 400)
+            self.error_response(str(error), 400)
         except Exception as error:
-            self.json_response({"error": str(error)}, 500)
+            self.log_error_detail(error)
+            self.error_response("Internal server error", 500)
 
     def do_DELETE(self):
         try:
             self.handle_api("DELETE")
         except ValueError as error:
-            self.json_response({"error": str(error)}, 400)
+            self.error_response(str(error), 400)
         except Exception as error:
-            self.json_response({"error": str(error)}, 500)
+            self.log_error_detail(error)
+            self.error_response("Internal server error", 500)
 
     def log_message(self, format_string, *args):
         print("[%s] %s" % (datetime.now().strftime("%H:%M:%S"), format_string % args))
+
+    def get_request_id(self):
+        if not hasattr(self, "_request_id"):
+            self._request_id = secrets.token_hex(8)
+
+        return self._request_id
+
+    def log_error_detail(self, error):
+        print(
+            "[%s] ERROR request_id=%s path=%s error=%s"
+            % (datetime.now().strftime("%H:%M:%S"), self.get_request_id(), self.path, error)
+        )
 
     def add_cors_headers(self):
         origin = self.headers.get("Origin", "")
@@ -565,9 +625,13 @@ class RestaurantHandler(BaseHTTPRequestHandler):
         self.add_security_headers()
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Cache-Control", "no-store")
+        self.send_header("X-Request-ID", self.get_request_id())
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
         self.wfile.write(body)
+
+    def error_response(self, message, status):
+        self.json_response({"error": message, "requestId": self.get_request_id()}, status)
 
     def read_json(self):
         content_length = int(self.headers.get("Content-Length", "0") or 0)
@@ -622,7 +686,7 @@ class RestaurantHandler(BaseHTTPRequestHandler):
         query = parse_qs(parsed.query)
 
         if method == "GET" and path == "/api/health":
-            self.json_response({"ok": True, "database": str(DB_PATH)})
+            self.health_check()
             return
 
         if method == "POST" and path == "/api/auth/customer/register":
@@ -741,6 +805,23 @@ class RestaurantHandler(BaseHTTPRequestHandler):
             return
 
         self.json_response({"error": "Endpoint not found"}, 404)
+
+    def health_check(self):
+        with connect_db() as db:
+            migration = db.execute("SELECT MAX(version) AS version FROM schema_migrations").fetchone()
+            user_count = db.execute("SELECT COUNT(*) AS total FROM users").fetchone()["total"]
+
+        storage_mode = "ephemeral" if os.environ.get("VERCEL") and "RESTAURANT_DB_PATH" not in os.environ else "persistent"
+        self.json_response(
+            {
+                "ok": True,
+                "appVersion": APP_VERSION,
+                "schemaVersion": migration["version"] or 0,
+                "database": str(DB_PATH),
+                "storageMode": storage_mode,
+                "users": user_count,
+            }
+        )
 
     def serve_static(self):
         parsed = urlparse(self.path)
@@ -1294,6 +1375,8 @@ def self_test():
         tables = db.execute("SELECT COUNT(*) AS total FROM restaurant_tables").fetchone()["total"]
         settings = db.execute("SELECT * FROM restaurant_settings WHERE id = 1").fetchone()
         session_columns = table_columns(db, "sessions")
+        schema_version = db.execute("SELECT MAX(version) AS version FROM schema_migrations").fetchone()["version"]
+        indexes = {row["name"] for row in db.execute("SELECT name FROM sqlite_master WHERE type = 'index'").fetchall()}
         token = ""
         expires_at = ""
         session = None
@@ -1331,6 +1414,9 @@ def self_test():
     assert tables >= 8
     assert settings is not None
     assert "expires_at" in session_columns
+    assert schema_version >= SCHEMA_VERSION
+    assert "idx_orders_status_timestamp" in indexes
+    assert "idx_order_items_order_id" in indexes
     assert MAX_JSON_BODY_BYTES > 0
     assert ALLOWED_ORIGINS
     assert token
