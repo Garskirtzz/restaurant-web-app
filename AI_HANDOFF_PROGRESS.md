@@ -418,11 +418,11 @@ Done:
 - Rate limiting for register (per IP) and order creation (per user).
 - Account lockout / cooldown after failed login attempts (per IP+role+username), returns 429 + Retry-After.
 - Server-side audit log for admin actions (`admin_audit_log`, schema v3, `GET /api/audit-log`).
+- Structured error logging via the `restaurant` logger (`RESTAURANT_LOG_LEVEL`); 500s log a full traceback with request_id/method/path/client, client disconnects are quiet warnings. Error handling centralized in `RestaurantHandler.run_method`/`dispatch` and reused by the Vercel adapter.
 
 Still recommended:
 - Move auth tokens to secure HTTP-only cookies if the project becomes more serious.
 - Remove inline `onclick` and then tighten CSP by removing `'unsafe-inline'`.
-- Add better error logging for production failures.
 - Add backup automation beyond manual Supabase backups.
 - Consider a shared-store (DB/Redis) limiter if strict cross-instance limits are needed (current limiter is in-memory per process).
 

@@ -24,7 +24,7 @@ class handler(RestaurantHandler):
             query_string = urlencode(query, doseq=True)
             self.path = normalized_path + (f"?{query_string}" if query_string else "")
 
-    def handle_api_request(self, method):
+    def dispatch(self, method):
         ensure_db_initialized()
         self.normalize_vercel_api_path()
         self.handle_api(method)
@@ -32,39 +32,3 @@ class handler(RestaurantHandler):
     def do_OPTIONS(self):
         self.normalize_vercel_api_path()
         super().do_OPTIONS()
-
-    def do_GET(self):
-        try:
-            self.handle_api_request("GET")
-        except ValueError as error:
-            self.error_response(str(error), 400)
-        except Exception as error:
-            self.log_error_detail(error)
-            self.error_response("Internal server error", 500)
-
-    def do_POST(self):
-        try:
-            self.handle_api_request("POST")
-        except ValueError as error:
-            self.error_response(str(error), 400)
-        except Exception as error:
-            self.log_error_detail(error)
-            self.error_response("Internal server error", 500)
-
-    def do_PUT(self):
-        try:
-            self.handle_api_request("PUT")
-        except ValueError as error:
-            self.error_response(str(error), 400)
-        except Exception as error:
-            self.log_error_detail(error)
-            self.error_response("Internal server error", 500)
-
-    def do_DELETE(self):
-        try:
-            self.handle_api_request("DELETE")
-        except ValueError as error:
-            self.error_response(str(error), 400)
-        except Exception as error:
-            self.log_error_detail(error)
-            self.error_response("Internal server error", 500)

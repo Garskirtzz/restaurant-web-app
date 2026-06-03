@@ -5,6 +5,7 @@ import argparse
 import hashlib
 import hmac
 import json
+import logging
 import mimetypes
 import os
 import re
@@ -82,6 +83,20 @@ LOGIN_FAILURE_WINDOW_SECONDS = positive_int_env("RESTAURANT_LOGIN_FAILURE_WINDOW
 # Burst protection for abusable write endpoints (register, order creation).
 RATE_LIMIT_MAX = positive_int_env("RESTAURANT_RATE_LIMIT_MAX", 60)
 RATE_LIMIT_WINDOW_SECONDS = positive_int_env("RESTAURANT_RATE_LIMIT_WINDOW_SECONDS", 60)
+
+# Errors raised when the client hangs up mid-response; logged quietly, never
+# treated as server faults.
+CONNECTION_ERRORS = (BrokenPipeError, ConnectionResetError, ConnectionAbortedError)
+
+logger = logging.getLogger("restaurant")
+if not logger.handlers:
+    _log_handler = logging.StreamHandler()
+    _log_handler.setFormatter(
+        logging.Formatter("%(asctime)s %(levelname)s [restaurant] %(message)s", "%Y-%m-%d %H:%M:%S")
+    )
+    logger.addHandler(_log_handler)
+logger.setLevel(getattr(logging, os.environ.get("RESTAURANT_LOG_LEVEL", "INFO").upper(), logging.INFO))
+logger.propagate = False
 
 
 DEFAULT_CUSTOMERS = [
@@ -967,58 +982,57 @@ class RestaurantHandler(BaseHTTPRequestHandler):
         self.end_headers()
 
     def do_GET(self):
-        try:
-            if self.path.startswith("/api/"):
-                self.handle_api("GET")
-            else:
-                self.serve_static()
-        except ValueError as error:
-            self.error_response(str(error), 400)
-        except Exception as error:
-            self.log_error_detail(error)
-            self.error_response("Internal server error", 500)
+        self.run_method("GET")
 
     def do_POST(self):
-        try:
-            self.handle_api("POST")
-        except ValueError as error:
-            self.error_response(str(error), 400)
-        except Exception as error:
-            self.log_error_detail(error)
-            self.error_response("Internal server error", 500)
+        self.run_method("POST")
 
     def do_PUT(self):
-        try:
-            self.handle_api("PUT")
-        except ValueError as error:
-            self.error_response(str(error), 400)
-        except Exception as error:
-            self.log_error_detail(error)
-            self.error_response("Internal server error", 500)
+        self.run_method("PUT")
 
     def do_DELETE(self):
+        self.run_method("DELETE")
+
+    def dispatch(self, method):
+        if method == "GET" and not self.path.startswith("/api/"):
+            self.serve_static()
+        else:
+            self.handle_api(method)
+
+    def run_method(self, method):
         try:
-            self.handle_api("DELETE")
+            self.dispatch(method)
         except ValueError as error:
-            self.error_response(str(error), 400)
-        except Exception as error:
-            self.log_error_detail(error)
-            self.error_response("Internal server error", 500)
+            # Validation/client error: expected, respond 400 without a stack trace.
+            self.safe_error(str(error), 400)
+        except CONNECTION_ERRORS as error:
+            logger.warning(
+                "client disconnected request_id=%s method=%s path=%s client=%s: %s",
+                self.get_request_id(), method, self.path, self.get_client_ip(), error,
+            )
+        except Exception:
+            logger.exception(
+                "unhandled error request_id=%s method=%s path=%s client=%s",
+                self.get_request_id(), method, self.path, self.get_client_ip(),
+            )
+            self.safe_error("Internal server error", 500)
+
+    def safe_error(self, message, status):
+        try:
+            self.error_response(message, status)
+        except CONNECTION_ERRORS:
+            # Client is already gone; nothing to send.
+            pass
 
     def log_message(self, format_string, *args):
-        print("[%s] %s" % (datetime.now().strftime("%H:%M:%S"), format_string % args))
+        # Route the stdlib access log through our logger so it honors RESTAURANT_LOG_LEVEL.
+        logger.info("%s - %s", self.address_string(), format_string % args)
 
     def get_request_id(self):
         if not hasattr(self, "_request_id"):
             self._request_id = secrets.token_hex(8)
 
         return self._request_id
-
-    def log_error_detail(self, error):
-        print(
-            "[%s] ERROR request_id=%s path=%s error=%s"
-            % (datetime.now().strftime("%H:%M:%S"), self.get_request_id(), self.path, error)
-        )
 
     def add_cors_headers(self):
         origin = self.headers.get("Origin", "")

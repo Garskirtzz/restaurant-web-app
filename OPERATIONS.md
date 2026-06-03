@@ -259,6 +259,7 @@ RESTAURANT_LOGIN_MAX_FAILURES
 RESTAURANT_LOGIN_FAILURE_WINDOW_SECONDS
 RESTAURANT_RATE_LIMIT_MAX
 RESTAURANT_RATE_LIMIT_WINDOW_SECONDS
+RESTAURANT_LOG_LEVEL
 RESTAURANT_APP_VERSION
 RESTAURANT_DB_SCHEMA
 RESTAURANT_DB_SSLMODE
@@ -348,6 +349,15 @@ Urutan diagnosa:
 Jika fix env var, selalu redeploy lalu cek `/api/health` lagi. Jangan menonaktifkan RLS atau menambah policy `anon` luas sebagai "perbaikan".
 
 ---
+
+## 9B. Membaca Log Server
+
+Backend memakai logger Python bernama `restaurant` yang menulis ke stderr dengan format `waktu LEVEL [restaurant] pesan`. Di Vercel, ini muncul di **Function Logs**.
+
+- Level diatur via `RESTAURANT_LOG_LEVEL` (`DEBUG`, `INFO`, `WARNING`, `ERROR`). Default `INFO`. Set `WARNING` untuk meredam log akses dan hanya menampilkan masalah.
+- **Error 500** dicatat sebagai `unhandled error` lengkap dengan `request_id`, `method`, `path`, `client`, dan stack trace. Respons ke pengguna tetap generik (`Internal server error`) — detail hanya ada di log.
+- Setiap respons error juga membawa header `X-Request-ID`; cocokkan nilai itu dengan `request_id` di log untuk menemukan kejadian spesifik.
+- Klien yang memutus koneksi di tengah respons dicatat ringkas sebagai `client disconnected` di level WARNING (bukan error/trace), jadi bisa diabaikan.
 
 ## 10. Cek Kesehatan Rutin
 
