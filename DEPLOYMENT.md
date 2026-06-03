@@ -59,6 +59,37 @@ Ambil host dan user dari Supabase Dashboard > Connect > Transaction pooler. Vari
 6. Buka `/api/health` dan pastikan response `ok: true`.
 7. Pastikan `storageMode` bernilai `persistent` dan `database` bernilai `postgres:restaurant_app`.
 
+## Dua Brand, Satu Server (Data Sama)
+
+Skenario: dua nama/tampilan brand berbeda di dua domain, tetapi berbagi server, API, database, menu, order, dan admin yang sama.
+
+Langkah:
+
+1. Tambahkan **kedua domain** ke project Vercel yang sama (Settings > Domains).
+2. Set `RESTAURANT_ALLOWED_ORIGINS` ke kedua origin, dipisah koma, lalu redeploy:
+
+   ```text
+   RESTAURANT_ALLOWED_ORIGINS=https://brand-a.example.com,https://brand-b.example.com
+   ```
+
+3. Atur nama/judul brand per domain di `assets/js/brand-config.js`:
+
+   ```js
+   window.RestaurantBranding = {
+       DEFAULT: { name: 'Menu Digital Restoran', title: 'Menu Digital Restoran' },
+       byHost: {
+           'brand-a.example.com': { name: 'Resto A', title: 'Resto A - Menu Digital' },
+           'brand-b.example.com': { name: 'Resto B', title: 'Resto B - Menu Digital' }
+       }
+   };
+   ```
+
+   Hostname yang tidak terdaftar (termasuk localhost) memakai `DEFAULT`, jadi perilaku lama tidak berubah. Branding diterapkan ke elemen ber-atribut `data-brand-name` dan ke `document.title`.
+
+Catatan:
+- Karena data dibagi, pengaturan di tabel `restaurant_settings` juga dibagi. Nama brand yang tampil di halaman publik diambil dari `brand-config.js` (per domain), bukan dari settings.
+- Auth tetap memakai token di `localStorage` (per domain). Cookie HttpOnly tidak dipakai karena tidak praktis dibagi lintas domain.
+
 ## Local Smoke Test
 
 ```powershell

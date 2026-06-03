@@ -51,7 +51,8 @@ Note: local schema is now v3 (admin audit log). Production still reports
 - `assets/js/admin-settings.js`: restaurant settings.
 - `assets/js/admin-customer.js`: customer panel in admin page.
 - `assets/js/api-client.js`: browser API wrapper.
-- `assets/js/shared-utils.js`: escaping, formatting, storage helpers.
+- `assets/js/shared-utils.js`: escaping, formatting, storage helpers, `delegateActions` (data-action event delegation), `applyBranding`.
+- `assets/js/brand-config.js`: per-domain branding map for the "2 brands, shared data" setup.
 - `server/app.py`: backend API, auth, session, database abstraction, migrations/seeding.
 - `api/index.py`: Vercel serverless adapter that imports `server/app.py`.
 - `vercel.json`: Vercel routing and Python function config.
@@ -372,6 +373,20 @@ Current status note:
 
 ## Remaining Work
 
+### Deployment Target: Two Brands, One Server (Shared Data)
+
+The intended deployment is two brands on two different domains, sharing one
+server, API, database, menu, orders, and admin. Status:
+
+- Done: per-domain branding mechanism (`assets/js/brand-config.js` + `applyBranding`)
+  swaps the public name/title by hostname, defaulting to the current name for
+  unknown hosts. CORS already supports multiple origins via comma-separated
+  `RESTAURANT_ALLOWED_ORIGINS`. See `DEPLOYMENT.md` > "Dua Brand, Satu Server".
+- Pending (needs the real domains, ties into Priority 2): add both domains in
+  Vercel, set `RESTAURANT_ALLOWED_ORIGINS` to both, and fill `brand-config.js`
+  `byHost` with the two hostnames/names.
+- Not multi-tenant: data is shared between the two brands by design.
+
 ### Priority 1: Final Branding and Real Restaurant Content
 
 Needed:
@@ -427,7 +442,7 @@ Done:
 - Removed all inline `on*` handlers (data-action delegation) and tightened CSP `script-src` to `'self'` (no `'unsafe-inline'`). Playwright asserts the strict CSP, the absence of inline handlers, and that delegated dynamic buttons work.
 
 Still recommended:
-- Move auth tokens to secure HTTP-only cookies if the project becomes more serious.
+- HTTP-only cookies: DEFERRED. The deployment target is two brands on two domains sharing one server/DB; HttpOnly cookies are not practical across separate domains, so token-in-localStorage is kept for this prototype.
 - Remove remaining inline `style=` attributes so `style-src 'unsafe-inline'` can also be dropped.
 - Add backup automation beyond manual Supabase backups.
 - Consider a shared-store (DB/Redis) limiter if strict cross-instance limits are needed (current limiter is in-memory per process).

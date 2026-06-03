@@ -155,6 +155,24 @@ test('api locks out repeated failed admin logins with 429 and Retry-After', asyn
   expect(Number(locked.headers()['retry-after'])).toBeGreaterThan(0);
 });
 
+test('per-domain branding swaps the visible name and title', async ({ page }) => {
+  await page.goto('/index.html');
+
+  // Default (unknown host) keeps the original brand.
+  await expect(page.locator('.nav-brand h1')).toHaveText('Menu Digital Restoran');
+
+  // A configured host overrides the brand name and document title.
+  await page.evaluate(() => {
+    window.RestaurantUtils.applyBranding(
+      { [window.location.hostname]: { name: 'Resto B', title: 'Resto B - Menu' } },
+      window.RestaurantBranding.DEFAULT
+    );
+  });
+
+  await expect(page.locator('.nav-brand h1')).toHaveText('Resto B');
+  await expect(page).toHaveTitle('Resto B - Menu');
+});
+
 test('served pages use a strict script CSP without inline handlers', async ({ page, request }) => {
   for (const path of ['/index.html', '/admin.html']) {
     const response = await request.get(path);

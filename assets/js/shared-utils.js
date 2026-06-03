@@ -104,6 +104,27 @@
         });
     }
 
+    // Applies per-domain branding: sets document.title and fills any element
+    // marked with [data-brand-name]. Resolves the brand by hostname, falling
+    // back to `defaults` for unknown hosts (e.g. localhost).
+    function applyBranding(brandMap, defaults) {
+        const brand = (brandMap && brandMap[window.location.hostname]) || defaults;
+
+        if (!brand) {
+            return;
+        }
+
+        if (brand.title) {
+            document.title = brand.title;
+        }
+
+        if (brand.name) {
+            document.querySelectorAll('[data-brand-name]').forEach(function (element) {
+                element.textContent = brand.name;
+            });
+        }
+    }
+
     window.RestaurantUtils = {
         escapeHTML,
         encodeKey,
@@ -116,6 +137,7 @@
         getOrderId,
         normalizeTableKey,
         formatTableNumber,
-        delegateActions
+        delegateActions,
+        applyBranding
     };
 })();
