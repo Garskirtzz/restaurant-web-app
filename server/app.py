@@ -6,6 +6,7 @@ import hashlib
 import hmac
 import json
 import mimetypes
+import os
 import secrets
 import sqlite3
 from contextlib import contextmanager
@@ -14,7 +15,7 @@ from datetime import datetime, timezone
 
 SERVER_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = SERVER_DIR.parent
-DB_PATH = SERVER_DIR / "restaurant.db"
+DB_PATH = Path(os.environ.get("RESTAURANT_DB_PATH", SERVER_DIR / "restaurant.db"))
 
 ADMIN_USERNAME = "admin"
 ADMIN_PASSWORD = "password123"
@@ -214,6 +215,15 @@ def init_db():
                 updated_at TEXT NOT NULL
             );
 
+            CREATE TABLE IF NOT EXISTS restaurant_settings (
+                id INTEGER PRIMARY KEY CHECK(id = 1),
+                name TEXT DEFAULT '',
+                address TEXT DEFAULT '',
+                phone TEXT DEFAULT '',
+                hours TEXT DEFAULT '',
+                updated_at TEXT NOT NULL
+            );
+
             CREATE TABLE IF NOT EXISTS orders (
                 id TEXT PRIMARY KEY,
                 order_number TEXT NOT NULL,
@@ -276,6 +286,16 @@ def init_db():
                 VALUES (:number, :capacity, :created_at, :updated_at)
                 """,
                 [{**table, "created_at": now, "updated_at": now} for table in DEFAULT_TABLES],
+            )
+
+        settings = db.execute("SELECT id FROM restaurant_settings WHERE id = 1").fetchone()
+        if not settings:
+            db.execute(
+                """
+                INSERT INTO restaurant_settings (id, name, address, phone, hours, updated_at)
+                VALUES (1, 'Menu Digital Restoran', '', '', '', ?)
+                """,
+                (utc_now(),),
             )
 
 
@@ -430,10 +450,26 @@ class RestaurantHandler(BaseHTTPRequestHandler):
                 self.json_response({"user": public_user(user)})
             return
 
+        if method == "PUT" and path == "/api/users/me":
+            user = self.require_user()
+            if user:
+                self.update_current_user(user)
+            return
+
         if method == "GET" and path == "/api/users/customers":
             if not self.require_user("admin"):
                 return
             self.list_customers()
+            return
+
+        if path == "/api/settings":
+            if method == "GET":
+                self.get_settings()
+            elif method == "PUT":
+                if self.require_user("admin"):
+                    self.update_settings()
+            else:
+                self.json_response({"error": "Method not allowed"}, 405)
             return
 
         if path == "/api/menu":
@@ -596,6 +632,66 @@ class RestaurantHandler(BaseHTTPRequestHandler):
             ).fetchall()
 
         self.json_response({"users": [row_to_dict(row) for row in rows]})
+
+    def update_current_user(self, user):
+        payload = self.read_json()
+        updates = {}
+
+        for field in ("name", "email", "phone", "address"):
+            if field in payload:
+                updates[field] = str(payload.get(field, "")).strip()
+
+        if not updates:
+            self.json_response({"error": "Tidak ada data yang diubah"}, 400)
+            return
+
+        if "name" in updates and not updates["name"]:
+            self.json_response({"error": "Nama tidak boleh kosong"}, 400)
+            return
+
+        assignments = ", ".join([f"{key} = ?" for key in updates.keys()])
+        values = list(updates.values())
+        values.append(user["id"])
+
+        with connect_db() as db:
+            db.execute(f"UPDATE users SET {assignments} WHERE id = ?", values)
+            updated_user = db.execute("SELECT * FROM users WHERE id = ?", (user["id"],)).fetchone()
+
+        self.json_response({"user": public_user(updated_user)})
+
+    def get_settings(self):
+        with connect_db() as db:
+            settings = db.execute("SELECT name, address, phone, hours, updated_at FROM restaurant_settings WHERE id = 1").fetchone()
+
+        self.json_response({"settings": row_to_dict(settings) or {}})
+
+    def update_settings(self):
+        payload = self.read_json()
+        fields = {
+            "name": str(payload.get("name", "")).strip(),
+            "address": str(payload.get("address", "")).strip(),
+            "phone": str(payload.get("phone", "")).strip(),
+            "hours": str(payload.get("hours", "")).strip(),
+            "updated_at": utc_now(),
+        }
+
+        with connect_db() as db:
+            db.execute(
+                """
+                INSERT INTO restaurant_settings (id, name, address, phone, hours, updated_at)
+                VALUES (1, :name, :address, :phone, :hours, :updated_at)
+                ON CONFLICT(id) DO UPDATE SET
+                    name = excluded.name,
+                    address = excluded.address,
+                    phone = excluded.phone,
+                    hours = excluded.hours,
+                    updated_at = excluded.updated_at
+                """,
+                fields,
+            )
+            settings = db.execute("SELECT name, address, phone, hours, updated_at FROM restaurant_settings WHERE id = 1").fetchone()
+
+        self.json_response({"settings": row_to_dict(settings)})
 
     def list_menu(self):
         with connect_db() as db:
@@ -881,12 +977,14 @@ def self_test():
         customers = db.execute("SELECT COUNT(*) AS total FROM users WHERE role = 'customer'").fetchone()["total"]
         menu = db.execute("SELECT COUNT(*) AS total FROM menu_items").fetchone()["total"]
         tables = db.execute("SELECT COUNT(*) AS total FROM restaurant_tables").fetchone()["total"]
+        settings = db.execute("SELECT * FROM restaurant_settings WHERE id = 1").fetchone()
 
     assert admin is not None
     assert verify_password(ADMIN_PASSWORD, admin["password_hash"])
     assert customers >= 2
     assert menu >= 9
     assert tables >= 8
+    assert settings is not None
     print("Self-test OK")
 
 

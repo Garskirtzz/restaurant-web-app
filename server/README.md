@@ -57,7 +57,10 @@ POST /api/auth/customer/register
 POST /api/auth/customer/login
 POST /api/auth/admin/login
 GET  /api/users/me
+PUT  /api/users/me
 GET  /api/users/customers
+GET  /api/settings
+PUT  /api/settings
 GET  /api/menu
 POST /api/menu
 PUT  /api/menu/{id}
@@ -80,15 +83,26 @@ Header token:
 Authorization: Bearer <token>
 ```
 
+## Database test
+
+Path database bisa diarahkan lewat environment variable:
+
+```powershell
+$env:RESTAURANT_DB_PATH="server/.playwright-test.db"
+python server/app.py --host 127.0.0.1 --port 8010
+```
+
+Konfigurasi Playwright memakai database test ini agar perubahan dari automated test tidak menyentuh `server/restaurant.db`.
+
 ## Integrasi frontend saat ini
 
 Saat halaman dibuka lewat server lokal, frontend akan memakai API untuk bagian berikut:
 
 - `index.html`: login/register customer, daftar meja checkout, checkout order, order history customer.
-- `admin.html`: login admin, membaca order dashboard, update status order `pending -> processing -> completed`, CRUD menu, CRUD meja, dan laporan Best Seller.
+- `admin.html`: login admin/customer, membaca order dashboard, update status order `pending -> processing -> completed`, CRUD menu, CRUD meja, profile customer, pengaturan restoran, dan laporan Best Seller.
 
 Jika server API tidak aktif atau file dibuka langsung dari explorer, sebagian alur lama masih fallback ke `localStorage`.
 
 ## Catatan tahap berikutnya
 
-Migrasi berikutnya adalah memindahkan profile customer, daftar akun customer server-side, dan pengaturan restoran agar seluruhnya memakai API, bukan `localStorage`.
+Migrasi berikutnya adalah memecah JavaScript besar menjadi modul domain kecil seperti auth, orders, menu, tables, reports, dan settings.

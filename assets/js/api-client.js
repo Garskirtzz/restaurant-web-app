@@ -64,6 +64,32 @@
             });
         },
 
+        getCurrentUser(token) {
+            return request('/api/users/me', {
+                token
+            });
+        },
+
+        updateCurrentUser(token, profile) {
+            return request('/api/users/me', {
+                method: 'PUT',
+                token,
+                body: profile
+            });
+        },
+
+        getSettings() {
+            return request('/api/settings');
+        },
+
+        updateSettings(token, settings) {
+            return request('/api/settings', {
+                method: 'PUT',
+                token,
+                body: settings
+            });
+        },
+
         getMenu() {
             return request('/api/menu');
         },

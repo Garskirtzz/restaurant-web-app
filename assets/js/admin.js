@@ -87,6 +87,10 @@
             return localStorage.getItem(ADMIN_AUTH_TOKEN_KEY) || '';
         }
 
+        function getCustomerToken() {
+            return localStorage.getItem(CUSTOMER_AUTH_TOKEN_KEY) || '';
+        }
+
         function normalizeApiOrder(order) {
             return {
                 id: order.id || order.order_number || order.orderNumber,
@@ -395,10 +399,31 @@
             await initializeAdminPanel();
         }
 
-        function userLogin() {
+        async function userLogin() {
             const username = document.getElementById('user-username').value;
             const password = document.getElementById('user-password').value;
             const errorElement = document.getElementById('user-login-error');
+
+            if (apiAvailable) {
+                try {
+                    const response = await RestaurantAPI.customerLogin({ username, password });
+                    localStorage.setItem(CUSTOMER_AUTH_TOKEN_KEY, response.token);
+                    localStorage.setItem(CUSTOMER_SESSION_KEY, JSON.stringify(response.user));
+                    localStorage.setItem('userLoggedIn', 'true');
+                    localStorage.removeItem('adminLoggedIn');
+                    localStorage.removeItem(ADMIN_AUTH_TOKEN_KEY);
+                    localStorage.setItem('currentUser', response.user.username);
+                    currentUser = response.user;
+                    if (errorElement) errorElement.style.display = 'none';
+                    showPanel('user-panel');
+                    await initializeUserPanel();
+                    return;
+                } catch (error) {
+                    if (errorElement) errorElement.style.display = 'block';
+                    return;
+                }
+            }
+
             const user = USER_CREDENTIALS.find(item => item.username === username && item.password === password);
 
             if (user) {
@@ -407,7 +432,7 @@
                 localStorage.setItem('currentUser', username);
                 currentUser = user;
                 showPanel('user-panel');
-                initializeUserPanel();
+                await initializeUserPanel();
                 return;
             }
 
@@ -469,8 +494,13 @@
             } else if (pageId === 'reports-page') {
                 setDefaultReportDates();
                 await generateCustomReport();
+            } else if (pageId === 'settings-page') {
+                await loadSettings();
             } else if (pageId === 'user-dashboard-page' || pageId === 'user-orders-page') {
                 loadUserOrders();
+            } else if (pageId === 'user-profile-page') {
+                await refreshCurrentUserProfile();
+                fillUserProfile();
             } else if (pageId === 'new-order-page') {
                 loadNewOrderData();
             }
@@ -479,6 +509,7 @@
         async function initializeAdminPanel() {
             ensureDefaultData();
             setDefaultReportDates();
+            await loadSettings();
             await refreshMenuData();
             await refreshTableData();
             await refreshOrderViews(true);
@@ -494,8 +525,26 @@
             return allowedPages.has(hash) ? `${hash}-page` : 'dashboard-page';
         }
 
-        function initializeUserPanel() {
+        async function refreshCurrentUserProfile() {
+            if (!apiAvailable || !getCustomerToken()) {
+                return currentUser;
+            }
+
+            try {
+                const response = await RestaurantAPI.getCurrentUser(getCustomerToken());
+                currentUser = response.user;
+                localStorage.setItem(CUSTOMER_SESSION_KEY, JSON.stringify(currentUser));
+                localStorage.setItem('currentUser', currentUser.username);
+            } catch (error) {
+                console.error('Gagal memuat profil customer dari API:', error);
+            }
+
+            return currentUser;
+        }
+
+        async function initializeUserPanel() {
             ensureDefaultData();
+            await refreshCurrentUserProfile();
             fillUserProfile();
             loadUserOrders();
             loadNewOrderData();
@@ -1306,15 +1355,34 @@
             document.getElementById('user-profile-address').value = currentUser.address || '';
         }
 
-        function saveUserProfile() {
+        async function saveUserProfile() {
             if (!currentUser) return;
 
-            currentUser = {
-                ...currentUser,
+            const profile = {
                 name: document.getElementById('user-profile-name').value.trim(),
                 email: document.getElementById('user-profile-email').value.trim(),
                 phone: document.getElementById('user-profile-phone').value.trim(),
                 address: document.getElementById('user-profile-address').value.trim()
+            };
+
+            if (apiAvailable && getCustomerToken()) {
+                try {
+                    const response = await RestaurantAPI.updateCurrentUser(getCustomerToken(), profile);
+                    currentUser = response.user;
+                    localStorage.setItem(CUSTOMER_SESSION_KEY, JSON.stringify(currentUser));
+                    localStorage.setItem('currentUser', currentUser.username);
+                    fillUserProfile();
+                    alert('Profil berhasil diperbarui');
+                } catch (error) {
+                    console.error('Gagal memperbarui profil:', error);
+                    alert(error.payload?.error || 'Profil gagal diperbarui');
+                }
+                return;
+            }
+
+            currentUser = {
+                ...currentUser,
+                ...profile
             };
 
             USER_CREDENTIALS = USER_CREDENTIALS.map(user => user.username === currentUser.username ? currentUser : user);
@@ -1641,22 +1709,64 @@
             `;
         }
 
-        function saveSettings() {
+        function fillSettingsForm(settings = {}) {
+            const fields = {
+                'restaurant-name': settings.name || '',
+                'restaurant-address': settings.address || '',
+                'restaurant-phone': settings.phone || '',
+                'restaurant-hours': settings.hours || ''
+            };
+
+            Object.entries(fields).forEach(([id, value]) => {
+                const element = document.getElementById(id);
+                if (element) element.value = value;
+            });
+        }
+
+        async function loadSettings() {
+            if (apiAvailable) {
+                try {
+                    const response = await RestaurantAPI.getSettings();
+                    fillSettingsForm(response.settings || {});
+                    return;
+                } catch (error) {
+                    console.error('Gagal memuat pengaturan dari API:', error);
+                }
+            }
+
+            try {
+                fillSettingsForm(JSON.parse(localStorage.getItem('restaurantSettings') || '{}'));
+            } catch (error) {
+                fillSettingsForm({});
+            }
+        }
+
+        async function saveSettings() {
             const settings = {
                 name: document.getElementById('restaurant-name').value.trim(),
                 address: document.getElementById('restaurant-address').value.trim(),
                 phone: document.getElementById('restaurant-phone').value.trim(),
                 hours: document.getElementById('restaurant-hours').value.trim()
             };
+
+            if (apiAvailable && getAdminToken()) {
+                try {
+                    const response = await RestaurantAPI.updateSettings(getAdminToken(), settings);
+                    fillSettingsForm(response.settings || settings);
+                    alert('Pengaturan berhasil disimpan');
+                } catch (error) {
+                    console.error('Gagal menyimpan pengaturan:', error);
+                    alert(error.payload?.error || 'Pengaturan gagal disimpan');
+                }
+                return;
+            }
+
             localStorage.setItem('restaurantSettings', JSON.stringify(settings));
             alert('Pengaturan berhasil disimpan');
         }
 
         function resetSettings() {
-            ['restaurant-name', 'restaurant-address', 'restaurant-phone', 'restaurant-hours'].forEach(id => {
-                const element = document.getElementById(id);
-                if (element) element.value = '';
-            });
+            fillSettingsForm({});
         }
 
         function closeModal(modalId) {
@@ -1682,11 +1792,21 @@
 
             if (localStorage.getItem('userLoggedIn') === 'true') {
                 const username = localStorage.getItem('currentUser');
-                currentUser = USER_CREDENTIALS.find(user => user.username === username) || null;
+                const rawSession = localStorage.getItem(CUSTOMER_SESSION_KEY);
+
+                try {
+                    currentUser = rawSession ? JSON.parse(rawSession) : null;
+                } catch (error) {
+                    currentUser = null;
+                }
+
+                if (!currentUser) {
+                    currentUser = USER_CREDENTIALS.find(user => user.username === username) || null;
+                }
 
                 if (currentUser) {
                     showPanel('user-panel');
-                    initializeUserPanel();
+                    await initializeUserPanel();
                     return;
                 }
 
