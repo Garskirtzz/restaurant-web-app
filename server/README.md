@@ -49,6 +49,22 @@ username: user2
 password: user123
 ```
 
+Credential ini hanya untuk development lokal. Password disimpan sebagai PBKDF2-SHA256, dan token login disimpan sebagai session dengan masa berlaku.
+
+## Konfigurasi auth
+
+Gunakan environment variable PowerShell jika ingin mengganti admin seed atau masa berlaku session:
+
+```powershell
+$env:RESTAURANT_ADMIN_USERNAME="admin"
+$env:RESTAURANT_ADMIN_PASSWORD="password-yang-lebih-kuat"
+$env:RESTAURANT_SESSION_TTL_SECONDS="86400"
+$env:RESTAURANT_PASSWORD_ITERATIONS="210000"
+python server/app.py
+```
+
+Jika `RESTAURANT_ADMIN_PASSWORD` diisi, password admin seed akan diperbarui saat server menginisialisasi database.
+
 ## Endpoint awal
 
 ```text
@@ -75,7 +91,7 @@ PUT  /api/orders/{orderId}/status
 GET  /api/reports/best-seller?start=YYYY-MM-DD&end=YYYY-MM-DD
 ```
 
-Endpoint yang mengubah data admin membutuhkan token admin dari login. Endpoint order customer membutuhkan token customer.
+Endpoint yang mengubah data admin membutuhkan token admin dari login. Endpoint order customer membutuhkan token customer. Token kadaluarsa sesuai `RESTAURANT_SESSION_TTL_SECONDS`.
 
 Header token:
 

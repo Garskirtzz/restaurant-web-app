@@ -11,7 +11,7 @@ Project ini sudah siap untuk pengembangan lokal yang rapi:
 - Admin dan customer flow sudah terhubung ke API saat server aktif.
 - Smoke test Playwright tersedia untuk cek halaman publik, login modal, login admin, dan pengaturan restoran.
 
-Project ini belum disarankan langsung untuk production publik tanpa hardening tambahan seperti password hashing serius, HTTPS, konfigurasi environment production, dan deployment backend yang stabil.
+Backend lokal sudah memakai PBKDF2-SHA256 untuk password dan session token dengan masa berlaku. Project ini tetap belum disarankan langsung untuk production publik tanpa HTTPS, rate limiting, konfigurasi environment production, audit keamanan, dan deployment backend yang stabil.
 
 ## Struktur Utama
 
@@ -98,6 +98,20 @@ password: user123
 ```
 
 Kredensial ini hanya untuk development lokal.
+
+## Konfigurasi Auth Lokal
+
+Credential admin dan masa berlaku session bisa diatur lewat environment variable PowerShell sebelum server dijalankan:
+
+```powershell
+$env:RESTAURANT_ADMIN_USERNAME="admin"
+$env:RESTAURANT_ADMIN_PASSWORD="password-yang-lebih-kuat"
+$env:RESTAURANT_SESSION_TTL_SECONDS="86400"
+$env:RESTAURANT_PASSWORD_ITERATIONS="210000"
+python server/app.py
+```
+
+Jika `RESTAURANT_ADMIN_PASSWORD` diisi, seed admin lokal akan diperbarui saat database diinisialisasi. Jangan commit credential production ke repository.
 
 ## Menjalankan Test
 

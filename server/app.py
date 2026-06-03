@@ -10,15 +10,30 @@ import os
 import secrets
 import sqlite3
 from contextlib import contextmanager
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 
 SERVER_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = SERVER_DIR.parent
 DB_PATH = Path(os.environ.get("RESTAURANT_DB_PATH", SERVER_DIR / "restaurant.db"))
 
-ADMIN_USERNAME = "admin"
-ADMIN_PASSWORD = "password123"
+
+def positive_int_env(name, default):
+    try:
+        value = int(os.environ.get(name, default))
+    except (TypeError, ValueError):
+        return default
+
+    return value if value > 0 else default
+
+
+ADMIN_USERNAME = os.environ.get("RESTAURANT_ADMIN_USERNAME", "admin").strip() or "admin"
+ADMIN_PASSWORD = os.environ.get("RESTAURANT_ADMIN_PASSWORD", "password123")
+ADMIN_PASSWORD_FROM_ENV = "RESTAURANT_ADMIN_PASSWORD" in os.environ
+PASSWORD_SCHEME = "pbkdf2_sha256"
+PASSWORD_ITERATIONS = positive_int_env("RESTAURANT_PASSWORD_ITERATIONS", 210000)
+LEGACY_PASSWORD_ITERATIONS = 120000
+SESSION_TTL_SECONDS = positive_int_env("RESTAURANT_SESSION_TTL_SECONDS", 60 * 60 * 24)
 
 
 DEFAULT_CUSTOMERS = [
@@ -118,8 +133,31 @@ DEFAULT_TABLES = [
 ]
 
 
+def utc_now_dt():
+    return datetime.now(timezone.utc)
+
+
 def utc_now():
-    return datetime.now(timezone.utc).isoformat()
+    return utc_now_dt().isoformat()
+
+
+def parse_utc_timestamp(value):
+    if not value:
+        return None
+
+    try:
+        parsed = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+    except ValueError:
+        return None
+
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+
+    return parsed.astimezone(timezone.utc)
+
+
+def session_expiry():
+    return (utc_now_dt() + timedelta(seconds=SESSION_TTL_SECONDS)).isoformat()
 
 
 @contextmanager
@@ -137,23 +175,54 @@ def connect_db():
         connection.close()
 
 
-def hash_password(password, salt=None):
+def hash_password(password, salt=None, iterations=None):
     salt = salt or secrets.token_hex(16)
-    digest = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt.encode("utf-8"), 120000)
-    return f"pbkdf2_sha256${salt}${digest.hex()}"
+    iterations = iterations or PASSWORD_ITERATIONS
+    digest = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt.encode("utf-8"), iterations)
+    return f"{PASSWORD_SCHEME}${iterations}${salt}${digest.hex()}"
 
 
 def verify_password(password, stored_hash):
-    try:
-        algorithm, salt, expected = stored_hash.split("$", 2)
-    except ValueError:
+    if not stored_hash:
         return False
 
-    if algorithm != "pbkdf2_sha256":
+    parts = str(stored_hash).split("$")
+    if len(parts) == 4:
+        algorithm, iteration_text, salt, expected = parts
+        try:
+            iterations = int(iteration_text)
+        except ValueError:
+            return False
+    elif len(parts) == 3:
+        algorithm, salt, expected = parts
+        iterations = LEGACY_PASSWORD_ITERATIONS
+    else:
+        return hmac.compare_digest(password, str(stored_hash))
+
+    if algorithm != PASSWORD_SCHEME or iterations <= 0:
         return False
 
-    candidate = hash_password(password, salt).split("$", 2)[2]
+    candidate = hashlib.pbkdf2_hmac(
+        "sha256",
+        password.encode("utf-8"),
+        salt.encode("utf-8"),
+        iterations,
+    ).hex()
     return hmac.compare_digest(candidate, expected)
+
+
+def password_needs_rehash(stored_hash):
+    parts = str(stored_hash or "").split("$")
+    if len(parts) != 4:
+        return True
+
+    algorithm, iteration_text, _salt, _expected = parts
+    try:
+        iterations = int(iteration_text)
+    except ValueError:
+        return True
+
+    return algorithm != PASSWORD_SCHEME or iterations != PASSWORD_ITERATIONS
 
 
 def row_to_dict(row):
@@ -166,6 +235,55 @@ def public_user(row):
         return None
 
     user.pop("password_hash", None)
+    user.pop("session_expires_at", None)
+    return user
+
+
+def table_columns(db, table_name):
+    return {row["name"] for row in db.execute(f"PRAGMA table_info({table_name})").fetchall()}
+
+
+def ensure_column(db, table_name, column_name, definition):
+    if column_name not in table_columns(db, table_name):
+        db.execute(f"ALTER TABLE {table_name} ADD COLUMN {column_name} {definition}")
+
+
+def migrate_schema(db):
+    ensure_column(db, "sessions", "expires_at", "TEXT")
+    db.execute(
+        "UPDATE sessions SET expires_at = ? WHERE expires_at IS NULL OR expires_at = ''",
+        (session_expiry(),),
+    )
+
+
+def purge_expired_sessions(db):
+    db.execute(
+        "DELETE FROM sessions WHERE expires_at IS NOT NULL AND expires_at <= ?",
+        (utc_now(),),
+    )
+
+
+def session_user(db, token):
+    row = db.execute(
+        """
+        SELECT users.*, sessions.expires_at AS session_expires_at
+        FROM sessions
+        JOIN users ON users.id = sessions.user_id
+        WHERE sessions.token = ?
+        """,
+        (token,),
+    ).fetchone()
+
+    if not row:
+        return None
+
+    expires_at = parse_utc_timestamp(row["session_expires_at"])
+    if not expires_at or expires_at <= utc_now_dt():
+        db.execute("DELETE FROM sessions WHERE token = ?", (token,))
+        return None
+
+    user = row_to_dict(row)
+    user.pop("session_expires_at", None)
     return user
 
 
@@ -192,6 +310,7 @@ def init_db():
                 user_id INTEGER NOT NULL,
                 role TEXT NOT NULL,
                 created_at TEXT NOT NULL,
+                expires_at TEXT NOT NULL,
                 FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
             );
 
@@ -252,7 +371,9 @@ def init_db():
             """
         )
 
-        seed_user(db, ADMIN_USERNAME, ADMIN_PASSWORD, "Admin", "admin")
+        migrate_schema(db)
+
+        seed_user(db, ADMIN_USERNAME, ADMIN_PASSWORD, "Admin", "admin", force_password=ADMIN_PASSWORD_FROM_ENV)
 
         for customer in DEFAULT_CUSTOMERS:
             seed_user(
@@ -299,9 +420,15 @@ def init_db():
             )
 
 
-def seed_user(db, username, password, name, role, email="", phone="", address=""):
-    exists = db.execute("SELECT id FROM users WHERE username = ?", (username,)).fetchone()
+def seed_user(db, username, password, name, role, email="", phone="", address="", force_password=False):
+    exists = db.execute("SELECT * FROM users WHERE username = ?", (username,)).fetchone()
     if exists:
+        should_rehash = verify_password(password, exists["password_hash"]) and password_needs_rehash(exists["password_hash"])
+        if force_password or should_rehash:
+            db.execute(
+                "UPDATE users SET password_hash = ? WHERE id = ?",
+                (hash_password(password), exists["id"]),
+            )
         return
 
     db.execute(
@@ -321,12 +448,14 @@ def generate_order_number():
 
 
 def make_session(db, user):
+    purge_expired_sessions(db)
     token = secrets.token_urlsafe(32)
+    expires_at = session_expiry()
     db.execute(
-        "INSERT INTO sessions (token, user_id, role, created_at) VALUES (?, ?, ?, ?)",
-        (token, user["id"], user["role"], utc_now()),
+        "INSERT INTO sessions (token, user_id, role, created_at, expires_at) VALUES (?, ?, ?, ?, ?)",
+        (token, user["id"], user["role"], utc_now(), expires_at),
     )
-    return token
+    return token, expires_at
 
 
 class RestaurantHandler(BaseHTTPRequestHandler):
@@ -400,16 +529,7 @@ class RestaurantHandler(BaseHTTPRequestHandler):
 
         token = auth_header[len(prefix) :].strip()
         with connect_db() as db:
-            row = db.execute(
-                """
-                SELECT users.*
-                FROM sessions
-                JOIN users ON users.id = sessions.user_id
-                WHERE sessions.token = ?
-                """,
-                (token,),
-            ).fetchone()
-            return row_to_dict(row)
+            return session_user(db, token)
 
     def require_user(self, role=None):
         user = self.get_auth_user()
@@ -598,12 +718,12 @@ class RestaurantHandler(BaseHTTPRequestHandler):
                     ),
                 )
                 user = db.execute("SELECT * FROM users WHERE username = ?", (username,)).fetchone()
-                token = make_session(db, user)
+                token, expires_at = make_session(db, user)
         except sqlite3.IntegrityError:
             self.json_response({"error": "Username sudah digunakan"}, 409)
             return
 
-        self.json_response({"token": token, "user": public_user(user)}, 201)
+        self.json_response({"token": token, "expiresAt": expires_at, "user": public_user(user)}, 201)
 
     def login_user(self, expected_role):
         payload = self.read_json()
@@ -616,9 +736,9 @@ class RestaurantHandler(BaseHTTPRequestHandler):
                 self.json_response({"error": "Username atau password salah"}, 401)
                 return
 
-            token = make_session(db, user)
+            token, expires_at = make_session(db, user)
 
-        self.json_response({"token": token, "user": public_user(user)})
+        self.json_response({"token": token, "expiresAt": expires_at, "user": public_user(user)})
 
     def list_customers(self):
         with connect_db() as db:
@@ -978,13 +1098,51 @@ def self_test():
         menu = db.execute("SELECT COUNT(*) AS total FROM menu_items").fetchone()["total"]
         tables = db.execute("SELECT COUNT(*) AS total FROM restaurant_tables").fetchone()["total"]
         settings = db.execute("SELECT * FROM restaurant_settings WHERE id = 1").fetchone()
+        session_columns = table_columns(db, "sessions")
+        token = ""
+        expires_at = ""
+        session = None
+        loaded_user = None
+        expired_user = None
+        expired_session = None
+
+        if admin:
+            token, expires_at = make_session(db, admin)
+            session = db.execute("SELECT expires_at FROM sessions WHERE token = ?", (token,)).fetchone()
+            loaded_user = session_user(db, token)
+
+            expired_token = "expired-" + secrets.token_urlsafe(8)
+            db.execute(
+                """
+                INSERT INTO sessions (token, user_id, role, created_at, expires_at)
+                VALUES (?, ?, ?, ?, ?)
+                """,
+                (
+                    expired_token,
+                    admin["id"],
+                    admin["role"],
+                    utc_now(),
+                    (utc_now_dt() - timedelta(seconds=1)).isoformat(),
+                ),
+            )
+            expired_user = session_user(db, expired_token)
+            expired_session = db.execute("SELECT token FROM sessions WHERE token = ?", (expired_token,)).fetchone()
 
     assert admin is not None
     assert verify_password(ADMIN_PASSWORD, admin["password_hash"])
+    assert not password_needs_rehash(admin["password_hash"])
     assert customers >= 2
     assert menu >= 9
     assert tables >= 8
     assert settings is not None
+    assert "expires_at" in session_columns
+    assert token
+    assert session is not None
+    assert parse_utc_timestamp(expires_at) > utc_now_dt()
+    assert parse_utc_timestamp(session["expires_at"]) > utc_now_dt()
+    assert loaded_user and loaded_user["id"] == admin["id"]
+    assert expired_user is None
+    assert expired_session is None
     print("Self-test OK")
 
 
