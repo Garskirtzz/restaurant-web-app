@@ -27,7 +27,7 @@
                 <div class="form-group">
                     <label for="user-password">Password</label>
                     <input type="password" id="user-password" placeholder="Masukkan password">
-                    <button class="password-toggle" onclick="togglePassword('user-password')">ðŸ‘ï¸</button>
+                    <button class="password-toggle" onclick="togglePassword('user-password')">👁️</button>
                 </div>
                 <button class="login-btn" onclick="userLogin()">Login</button>
                 <div id="user-login-error" class="error-message">Username atau password salah!</div>
@@ -41,7 +41,7 @@
                 <div class="form-group">
                     <label for="admin-password">Password Admin</label>
                     <input type="password" id="admin-password" placeholder="Masukkan password admin">
-                    <button class="password-toggle" onclick="togglePassword('admin-password')">ðŸ‘ï¸</button>
+                    <button class="password-toggle" onclick="togglePassword('admin-password')">👁️</button>
                 </div>
                 <button class="login-btn" onclick="adminLogin()">Login Admin</button>
                 <div id="admin-login-error" class="error-message">Username atau password admin salah!</div>
@@ -63,11 +63,11 @@
         <div class="container">
             <aside class="sidebar">
                 <ul class="sidebar-menu">
-                    <li><a href="#dashboard" class="active"><i>ðŸ“Š</i> Dashboard</a></li>
-                    <li><a href="#menu"><i>ðŸ½ï¸</i> Manajemen Menu</a></li>
-                    <li><a href="#tables"><i>ðŸª‘</i> Manajemen Meja</a></li>
-                    <li><a href="#reports"><i>ðŸ“ˆ</i> Laporan</a></li>
-                    <li><a href="#settings"><i>âš™ï¸</i> Pengaturan</a></li>
+                    <li><a href="#dashboard" class="active"><i>📊</i> Dashboard</a></li>
+                    <li><a href="#menu"><i>🍽️</i> Manajemen Menu</a></li>
+                    <li><a href="#tables"><i>🪑</i> Manajemen Meja</a></li>
+                    <li><a href="#reports"><i>📈</i> Laporan</a></li>
+                    <li><a href="#settings"><i>⚙️</i> Pengaturan</a></li>
                 </ul>
             </aside>
 
@@ -306,10 +306,10 @@
         <div class="container">
             <aside class="sidebar">
                 <ul class="sidebar-menu">
-                    <li><a href="#user-dashboard" class="active"><i>ðŸ“Š</i> Dashboard</a></li>
-                    <li><a href="#user-orders"><i>ðŸ“</i> Pesanan Saya</a></li>
-                    <li><a href="#user-profile"><i>ðŸ‘¤</i> Profil</a></li>
-                    <li><a href="#new-order"><i>âž•</i> Pesan Baru</a></li>
+                    <li><a href="#user-dashboard" class="active"><i>📊</i> Dashboard</a></li>
+                    <li><a href="#user-orders"><i>📝</i> Pesanan Saya</a></li>
+                    <li><a href="#user-profile"><i>👤</i> Profil</a></li>
+                    <li><a href="#new-order"><i>➕</i> Pesan Baru</a></li>
                 </ul>
             </aside>
 
@@ -461,7 +461,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h3 class="modal-title">Tambah Menu Baru</h3>
-                <button class="close-modal" onclick="closeModal('add-menu-modal')">Ã—</button>
+                <button class="close-modal" onclick="closeModal('add-menu-modal')">×</button>
             </div>
             <div class="form-container">
                 <div class="form-group">
@@ -506,7 +506,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h3 class="modal-title">Edit Menu</h3>
-                <button class="close-modal" onclick="closeModal('edit-menu-modal')">Ã—</button>
+                <button class="close-modal" onclick="closeModal('edit-menu-modal')">×</button>
             </div>
             <div class="form-container">
                 <input type="hidden" id="edit-menu-id">
@@ -552,7 +552,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h3 class="modal-title">Detail Pesanan <span id="detail-order-id"></span></h3>
-                <button class="close-modal" onclick="closeModal('order-detail-modal')">Ã—</button>
+                <button class="close-modal" onclick="closeModal('order-detail-modal')">×</button>
             </div>
             <div style="padding: 1.5rem;">
                 <div style="margin-bottom: 1.5rem;">
@@ -588,7 +588,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h3 class="modal-title">Tambah Meja Baru</h3>
-                <button class="close-modal" onclick="closeModal('add-table-modal')">Ã—</button>
+                <button class="close-modal" onclick="closeModal('add-table-modal')">×</button>
             </div>
             <div class="form-container">
                 <div class="form-group">

@@ -584,7 +584,7 @@
             const todayRevenue = todayOrders.reduce((sum, order) => sum + Number(order.total || 0), 0);
 
             document.getElementById('today-orders').textContent = todayOrders.length;
-            document.getElementById('orders-change').textContent = `${incomingToday} masuk Â· ${processingToday} diproses`;
+            document.getElementById('orders-change').textContent = `${incomingToday} masuk · ${processingToday} diproses`;
             document.getElementById('today-revenue').textContent = formatCurrency(todayRevenue);
             document.getElementById('revenue-change').textContent = `${completedToday} pesanan selesai`;
 
@@ -1626,7 +1626,7 @@
                                 <div class="legend-item">
                                     <i class="legend-swatch" style="--swatch: ${color}"></i>
                                     <strong>${escapeHTML(item.name)}</strong>
-                                    <span>${percentage}% Â· ${item.quantity} item Â· ${formatCurrency(item.revenue)}</span>
+                                    <span>${percentage}% · ${item.quantity} item · ${formatCurrency(item.revenue)}</span>
                                 </div>
                             `;
                         }).join('')}

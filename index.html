@@ -16,17 +16,17 @@
             </div>
             <div class="nav-actions">
                 <button type="button" class="nav-action-btn" onclick="openOrderHistory()">
-                    <span>ðŸ§¾</span>
+                    <span>🧾</span>
                     <span>Order History</span>
                 </button>
                 <button type="button" class="nav-action-btn" onclick="openModal('auth-modal')">
-                    <span>â†—</span>
+                    <span>↗</span>
                     <span id="auth-nav-label">Sign In</span>
                 </button>
                 <button type="button" id="cart-toggle" onclick="toggleCart()" aria-label="Buka keranjang">
-                    <span class="cart-symbol">ðŸ›’</span>
+                    <span class="cart-symbol">🛒</span>
                     <span class="cart-summary">
-                        <span id="cart-count">0</span> item Â· Rp<span id="cart-total">0</span>
+                        <span id="cart-count">0</span> item · Rp<span id="cart-total">0</span>
                     </span>
                     <span id="cart-badge">0</span>
                 </button>
@@ -37,7 +37,7 @@
     <div id="cart-preview">
         <div class="cart-header">
             <h2>Pesanan Anda</h2>
-            <button class="close-cart" onclick="toggleCart()">Ã—</button>
+            <button class="close-cart" onclick="toggleCart()">×</button>
         </div>
 
         <div id="cart-items-container">
@@ -287,7 +287,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h3 class="modal-title">Pembayaran</h3>
-                <button class="close-modal" onclick="closeModal('checkout-modal')">Ã—</button>
+                <button class="close-modal" onclick="closeModal('checkout-modal')">×</button>
             </div>
             <div class="modal-message">
                 <div class="checkout-section">
@@ -317,21 +317,21 @@
                     <div class="payment-method" onclick="selectPaymentMethod(this)">
                         <input type="radio" name="payment" id="cash" value="cash">
                         <label for="cash">
-                            <span class="payment-icon">ðŸ’µ</span>
+                            <span class="payment-icon">💵</span>
                             <span>Tunai</span>
                         </label>
                     </div>
                     <div class="payment-method" onclick="selectPaymentMethod(this)">
                         <input type="radio" name="payment" id="qris" value="qris">
                         <label for="qris">
-                            <span class="payment-icon">ðŸ“±</span>
+                            <span class="payment-icon">📱</span>
                             <span>QRIS</span>
                         </label>
                     </div>
                     <div class="payment-method" onclick="selectPaymentMethod(this)">
                         <input type="radio" name="payment" id="bank-transfer" value="bank-transfer">
                         <label for="bank-transfer">
-                            <span class="payment-icon">ðŸ¦</span>
+                            <span class="payment-icon">🏦</span>
                             <span>Transfer Bank</span>
                         </label>
                     </div>
@@ -350,7 +350,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h3 class="modal-title">Hapus Semua Item</h3>
-                <button class="close-modal" onclick="closeModal('clear-cart-modal')">Ã—</button>
+                <button class="close-modal" onclick="closeModal('clear-cart-modal')">×</button>
             </div>
             <div class="modal-message">
                 Apakah Anda yakin ingin menghapus semua item dari keranjang?
@@ -367,10 +367,10 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h3 class="modal-title">Pesanan Berhasil</h3>
-                <button class="close-modal" onclick="closeModal('success-modal')">Ã—</button>
+                <button class="close-modal" onclick="closeModal('success-modal')">×</button>
             </div>
             <div class="modal-message" style="text-align: center;">
-                <div class="success-icon">âœ“</div>
+                <div class="success-icon">✓</div>
                 <p>Pesanan Anda telah berhasil diproses!</p>
                 <p>No. Pesanan: <strong id="success-order-number">-</strong></p>
                 <p>Total: <strong>Rp<span id="success-order-total">0</span></strong></p>
@@ -390,7 +390,7 @@
                     <span class="modal-kicker">History</span>
                     <h3 class="modal-title">Order History</h3>
                 </div>
-                <button class="close-modal" onclick="closeModal('order-history-modal')">Ã—</button>
+                <button class="close-modal" onclick="closeModal('order-history-modal')">×</button>
             </div>
             <div class="modal-message">
                 <div id="order-history-list" class="order-history-list">
@@ -408,7 +408,7 @@
                     <span class="modal-kicker">Account</span>
                     <h3 class="modal-title">Sign In</h3>
                 </div>
-                <button class="close-modal" onclick="closeModal('auth-modal')">Ã—</button>
+                <button class="close-modal" onclick="closeModal('auth-modal')">×</button>
             </div>
 
             <div class="auth-tabs" role="tablist" aria-label="Sign in options">

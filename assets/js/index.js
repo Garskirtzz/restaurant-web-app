@@ -517,7 +517,7 @@
                     </div>
                     <div class="cart-item-actions">
                         <div class="cart-item-total">Rp${itemTotal.toLocaleString('id-ID')}</div>
-                        <button class="cart-item-remove" onclick="removeCartItem('${item.name}')">Ã—</button>
+                        <button class="cart-item-remove" onclick="removeCartItem('${item.name}')">×</button>
                     </div>
                 `;
                 cartItemsContainer.appendChild(cartItemElement);

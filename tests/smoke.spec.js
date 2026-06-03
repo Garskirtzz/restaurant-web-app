@@ -16,6 +16,11 @@ async function loginAdmin(page) {
   await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible();
 }
 
+async function expectNoMojibake(page) {
+  const bodyText = await page.locator('body').innerText();
+  expect(bodyText).not.toMatch(/[ÃÂðâ�]/);
+}
+
 test('public menu page renders core navigation and menu content', async ({ page }) => {
   await page.goto('/index.html');
 
@@ -25,6 +30,7 @@ test('public menu page renders core navigation and menu content', async ({ page 
   await expect(page.getByRole('button', { name: /Sign In/ })).toBeVisible();
   await expect(page.locator('.category-tab.active')).toContainText('Semua Menu');
   await expect(page.getByText('Nasi Goreng Special').first()).toBeVisible();
+  await expectNoMojibake(page);
 });
 
 test('sign in modal exposes customer and admin flows', async ({ page }) => {
@@ -51,6 +57,7 @@ test('admin login shows dashboard without overlapping login layer', async ({ pag
   await expect(page.locator('#admin-panel')).toBeVisible();
   await expect(page.locator('#login-page')).toBeHidden();
   await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible();
+  await expectNoMojibake(page);
 });
 
 test('admin settings save to API-backed restaurant settings', async ({ page, request }) => {
