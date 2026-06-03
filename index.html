@@ -1,0 +1,3103 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Menu Digital Restoran</title>
+    <style>
+        :root {
+            --bg-main: #f8f9fa;
+            --bg-card: #ffffff;
+            --surface-grey: #e9ecef;
+            --border-grey: #dee2e6;
+            --text-dark: #212529;
+            --text-muted: #6c757d;
+            --accent: #f45656;
+            --accent-hover: #d32f2f;
+            --radius-premium: 16px;
+            --shadow-soft: 0 10px 30px rgba(0, 0, 0, 0.02);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: var(--bg-main);
+            color: var(--text-dark);
+            line-height: 1.6;
+        }
+
+        /* Header Styles */
+        header {
+            background: var(--accent);
+            color: white;
+            text-align: center;
+            padding: 1.5rem 1rem;
+            position: relative;
+            box-shadow: var(--shadow-soft);
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 2rem;
+            letter-spacing: 0.5px;
+        }
+
+        #customer-info {
+            margin-top: 10px;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .info-item {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .info-item:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .info-item i {
+            margin-right: 5px;
+        }
+
+        /* Main Content */
+        main {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        section {
+            margin-bottom: 3rem;
+        }
+
+        section h2 {
+            margin-bottom: 1.5rem;
+            border-bottom: 3px solid var(--accent);
+            display: inline-block;
+            padding-bottom: 0.5rem;
+            font-size: 1.5rem;
+            color: var(--accent);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+
+        /* Card Styles */
+        .card {
+            background: var(--bg-card);
+            border-radius: var(--radius-premium);
+            box-shadow: var(--shadow-soft);
+            overflow: hidden;
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-soft);
+        }
+
+        .card img {
+            width: 100%;
+            height: auto;
+            aspect-ratio: 16 / 9;
+            object-fit: cover;
+            display: block;
+        }
+
+        .card-content {
+            padding: 1.2rem;
+        }
+
+        .card-title {
+            font-weight: 600;
+            margin: 0 0 0.5rem;
+            font-size: 1.1rem;
+        }
+
+        .price {
+            color: var(--accent);
+            font-weight: 700;
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        .card-description {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+
+        .card-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 0.6rem 1.2rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.2s, transform 0.2s;
+            font-size: 0.95rem;
+        }
+
+        .btn:hover {
+            background: var(--accent-hover);
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: var(--surface-grey);
+        }
+
+        .btn-secondary:hover {
+            background: var(--surface-grey);
+        }
+
+        .quantity-control {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .quantity-btn {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: #f0f0f0;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1rem;
+            transition: background 0.2s;
+        }
+
+        .quantity-btn:hover {
+            background: #ddd;
+        }
+
+        .quantity-value {
+            min-width: 20px;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        /* Cart Styles */
+        #cart-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            box-shadow: var(--shadow-soft);
+            z-index: 1001;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.2s;
+        }
+
+        #cart-toggle:hover {
+            transform: scale(1.1);
+        }
+
+        #cart-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: white;
+            color: var(--accent);
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        #cart-preview {
+            position: fixed;
+            top: 0;
+            right: -400px;
+            width: 380px;
+            height: 100vh;
+            background: white;
+            box-shadow: var(--shadow-soft);
+            transition: right 0.3s ease;
+            z-index: 1000;
+            padding: 1.5rem;
+            box-sizing: border-box;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #cart-preview.show {
+            right: 0;
+        }
+
+        .cart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #eee;
+        }
+
+        .cart-header h2 {
+            color: var(--accent);
+            font-size: 1.5rem;
+        }
+
+        .close-cart {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-muted);
+            transition: color 0.2s;
+        }
+
+        .close-cart:hover {
+            color: var(--accent);
+        }
+
+        #order-info-preview {
+            background: #f9f9f9;
+            padding: 1rem;
+            border-radius: var(--radius-premium);
+            margin-bottom: 1.5rem;
+        }
+
+        #order-info-preview p {
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        #order-info-preview strong {
+            color: var(--accent);
+        }
+
+        #cart-items-container {
+            flex-grow: 1;
+            overflow-y: auto;
+            margin-bottom: 1.5rem;
+        }
+
+        .empty-cart {
+            text-align: center;
+            padding: 2rem 0;
+            color: #888;
+            font-size: 1rem;
+        }
+
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .cart-item-info {
+            flex-grow: 1;
+        }
+
+        .cart-item-name {
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+        }
+
+        .cart-item-price {
+            font-size: 0.9rem;
+            color: var(--accent);
+            margin-bottom: 0.5rem;
+        }
+
+        .cart-item-quantity {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .cart-item-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .cart-item-total {
+            font-weight: bold;
+            min-width: 80px;
+            text-align: right;
+        }
+
+        .cart-item-remove {
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            width: 25px;
+            height: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .cart-item-remove:hover {
+            background: #ff5252;
+        }
+
+        .cart-footer {
+            border-top: 2px solid var(--accent);
+            padding-top: 1.5rem;
+        }
+
+        .cart-total {
+            display: flex;
+            justify-content: space-between;
+            font-weight: bold;
+            font-size: 1.2rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .cart-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .cart-actions .btn {
+            flex: 1;
+            padding: 0.8rem;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(248, 249, 250, 0.74);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 1.8rem;
+            border-radius: var(--radius-premium);
+            width: 90%;
+            max-width: 400px;
+            box-shadow: var(--shadow-soft);
+            animation: modalFadeIn 0.3s;
+        }
+
+        @keyframes modalFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-title {
+            color: var(--accent);
+            margin: 0;
+            font-size: 1.3rem;
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-muted);
+            transition: color 0.2s;
+        }
+
+        .close-modal:hover {
+            color: var(--accent);
+        }
+
+        .modal-message {
+            margin: 1.5rem 0;
+            line-height: 1.6;
+        }
+
+        .form-group {
+            margin-bottom: 1.2rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 0.7rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .payment-methods {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin: 1.5rem 0;
+        }
+
+        .payment-method {
+            display: flex;
+            align-items: center;
+            padding: 0.8rem;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .payment-method:hover {
+            border-color: var(--accent);
+        }
+
+        .payment-method.selected {
+            border-color: var(--accent);
+            background-color: rgba(244, 86, 86, 0.05);
+        }
+
+        .payment-method input {
+            margin-right: 10px;
+            cursor: pointer;
+        }
+
+        .payment-method label {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            cursor: pointer;
+            font-size: 0.95rem;
+        }
+
+        .payment-icon {
+            margin-right: 10px;
+            font-size: 1.3rem;
+        }
+
+        .payment-details {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: #f9f9f9;
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+
+        .payment-details p {
+            margin: 0.5rem 0;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 1.5rem;
+        }
+
+        .modal-actions .btn {
+            min-width: 100px;
+            padding: 0.7rem;
+        }
+
+        .btn-cancel {
+            background: #888;
+        }
+
+        .btn-cancel:hover {
+            background: #777;
+        }
+
+        /* Success Modal */
+        .success-icon {
+            font-size: 3.5rem;
+            color: #4CAF50;
+            margin-bottom: 1rem;
+            animation: bounce 0.5s;
+        }
+
+        @keyframes bounce {
+
+            0%,
+            20%,
+            50%,
+            80%,
+            100% {
+                transform: translateY(0);
+            }
+
+            40% {
+                transform: translateY(-20px);
+            }
+
+            60% {
+                transform: translateY(-10px);
+            }
+        }
+
+        /* Toast Notification */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--text-dark);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 30px;
+            z-index: 3000;
+            font-size: 0.95rem;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+            max-width: 90%;
+            text-align: center;
+        }
+
+        .toast.show {
+            opacity: 1;
+        }
+
+        /* Order Number */
+        .order-number {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: var(--accent);
+            color: white;
+            padding: 0.6rem 1.2rem;
+            border-radius: 30px;
+            font-weight: bold;
+            box-shadow: var(--shadow-soft);
+            z-index: 1001;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        /* Admin Link */
+        .admin-link {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: #333;
+            color: white;
+            padding: 0.8rem 1.5rem;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: 500;
+            box-shadow: var(--shadow-soft);
+            z-index: 1000;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .admin-link:hover {
+            background: #444;
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-soft);
+        }
+
+        .admin-link i {
+            font-size: 1.1rem;
+        }
+
+        /* Responsive Styles */
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            }
+
+            #cart-preview {
+                width: 100%;
+                max-width: 380px;
+            }
+
+            .modal-content {
+                width: 95%;
+                padding: 1.5rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 1.7rem;
+            }
+
+            .info-item {
+                padding: 6px 12px;
+                font-size: 0.85rem;
+            }
+
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            #cart-toggle {
+                width: 50px;
+                height: 50px;
+                font-size: 1.3rem;
+            }
+
+            #cart-badge {
+                width: 20px;
+                height: 20px;
+                font-size: 0.8rem;
+            }
+
+            .order-number {
+                top: 15px;
+                left: 15px;
+                padding: 0.5rem 1rem;
+                font-size: 0.8rem;
+            }
+
+            .admin-link {
+                bottom: 20px;
+                right: 20px;
+                padding: 0.6rem 1.2rem;
+                font-size: 0.9rem;
+            }
+        }
+        /* Grey Aesthetic UI System */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            background: var(--bg-main);
+            color: var(--text-dark);
+            font-family: Inter, "Segoe UI", Arial, sans-serif;
+            line-height: 1.55;
+            letter-spacing: 0;
+        }
+
+        button,
+        input,
+        select {
+            font: inherit;
+        }
+
+        .top-navbar {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(248, 249, 250, 0.85);
+            color: var(--text-dark);
+            padding: 14px clamp(18px, 4vw, 48px);
+            border-bottom: 1px solid var(--border-grey);
+            box-shadow: none;
+            text-align: left;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        .nav-shell {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 28px;
+            max-width: 1280px;
+            min-height: 68px;
+            margin: 0 auto;
+        }
+
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            min-width: max-content;
+        }
+
+        .nav-brand h1 {
+            color: var(--text-dark);
+            font-size: clamp(1.18rem, 2vw, 1.62rem);
+            font-weight: 760;
+            line-height: 1.05;
+            letter-spacing: 0;
+        }
+
+        .nav-actions,
+        #customer-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav-actions {
+            justify-content: flex-end;
+            min-width: 0;
+        }
+
+        #customer-info {
+            flex-wrap: nowrap;
+            margin-top: 0;
+        }
+
+        .nav-chip,
+        .info-item,
+        .nav-action-btn,
+        #cart-toggle {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+            min-height: 44px;
+            padding: 10px 14px;
+            background: var(--bg-card);
+            color: var(--text-dark);
+            border: 1px solid var(--border-grey);
+            border-radius: 999px;
+            box-shadow: none;
+            font-size: 0.9rem;
+            font-weight: 650;
+            white-space: nowrap;
+            transition: all 0.3s ease;
+        }
+
+        .info-item {
+            cursor: pointer;
+        }
+
+        .nav-chip:hover,
+        .info-item:hover,
+        .nav-action-btn:hover,
+        #cart-toggle:hover {
+            background: var(--surface-grey);
+            border-color: var(--text-muted);
+            text-decoration: none;
+            transform: translateY(-1px) scale(1.015);
+        }
+
+        .order-number {
+            position: static;
+            width: max-content;
+            max-width: none;
+            margin: 0;
+        }
+
+        #cart-toggle {
+            position: relative;
+            top: auto;
+            right: auto;
+            width: auto;
+            height: auto;
+            cursor: pointer;
+            z-index: auto;
+        }
+
+        .cart-symbol {
+            line-height: 1;
+        }
+
+        .cart-summary {
+            color: var(--text-dark);
+        }
+
+        #cart-badge {
+            position: absolute;
+            top: -7px;
+            right: -7px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            background: var(--text-dark);
+            color: var(--bg-card);
+            border: 1px solid var(--bg-card);
+            border-radius: 999px;
+            font-size: 0.78rem;
+            font-weight: 800;
+        }
+
+        [hidden] {
+            display: none;
+        }
+
+        main {
+            max-width: 1220px;
+            margin: 0 auto;
+            padding: 56px clamp(18px, 4vw, 56px) 100px;
+        }
+
+        .menu-filter {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 24px;
+            margin-bottom: 42px;
+            padding: 0 0 28px;
+            border-bottom: 1px solid var(--border-grey);
+        }
+
+        .menu-filter-copy {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .menu-filter-kicker {
+            color: var(--text-muted);
+            font-size: 0.74rem;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+        }
+
+        .menu-filter-title {
+            color: var(--text-dark);
+            font-size: clamp(1.35rem, 2.4vw, 2rem);
+            font-weight: 720;
+            line-height: 1.1;
+        }
+
+        .category-tabs {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 8px;
+            max-width: 100%;
+            padding: 6px;
+            overflow-x: auto;
+            background: var(--bg-card);
+            border: 1px solid var(--border-grey);
+            border-radius: 999px;
+            box-shadow: var(--shadow-soft);
+            scrollbar-width: none;
+        }
+
+        .category-tabs::-webkit-scrollbar {
+            display: none;
+        }
+
+        .category-tab {
+            flex: 0 0 auto;
+            min-height: 42px;
+            padding: 10px 18px;
+            background: var(--surface-grey);
+            color: var(--text-muted);
+            border: 1px solid transparent;
+            border-radius: 999px;
+            cursor: pointer;
+            font-weight: 700;
+            letter-spacing: 0;
+            white-space: nowrap;
+            transition: all 0.3s ease;
+        }
+
+        .category-tab:hover {
+            background: var(--bg-card);
+            border-color: var(--text-muted);
+            color: var(--text-dark);
+            transform: translateY(-1px) scale(1.015);
+        }
+
+        .category-tab:active {
+            transform: scale(0.97);
+        }
+
+        .category-tab.active {
+            background: var(--text-dark);
+            color: var(--bg-card);
+            border-color: var(--text-dark);
+        }
+
+        .category-tab:focus-visible {
+            outline: none;
+            box-shadow: 0 0 0 4px rgba(33, 37, 41, 0.08);
+        }
+
+        .menu-section-hidden {
+            display: none;
+        }
+
+        section {
+            margin-bottom: 72px;
+            padding-top: 0;
+            border-top: 0;
+        }
+
+        section h2 {
+            display: block;
+            margin-bottom: 24px;
+            padding-bottom: 18px;
+            border-bottom: 1px solid var(--border-grey);
+            color: var(--text-dark);
+            font-size: clamp(1.55rem, 2.5vw, 2.3rem);
+            font-weight: 760;
+            letter-spacing: 0;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(min(100%, 290px), 1fr));
+            gap: clamp(24px, 3vw, 38px);
+            border-top: 0;
+        }
+
+        .card {
+            display: flex;
+            flex-direction: column;
+            min-height: 100%;
+            padding: 10px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-grey);
+            border-radius: calc(var(--radius-premium) + 6px);
+            box-shadow: none;
+            overflow: hidden;
+            cursor: pointer;
+            transform-origin: center;
+            transition: all 0.3s ease;
+        }
+
+        .card.is-hidden-by-filter {
+            display: none;
+        }
+
+        .card:hover {
+            background: var(--bg-card);
+            border-color: #c8ced4;
+            box-shadow: none;
+            transform: translateY(-4px) scale(1.01);
+        }
+
+        .card:active {
+            transform: scale(0.992);
+        }
+
+        .card img {
+            width: 100%;
+            height: 220px;
+            aspect-ratio: 16 / 9;
+            border: 1px solid var(--border-grey);
+            border-radius: var(--radius-premium);
+            object-fit: cover;
+            display: block;
+            filter: grayscale(0.18) contrast(0.98);
+            transition: filter 220ms ease, transform 220ms ease;
+        }
+
+        .card:hover img {
+            filter: grayscale(0) contrast(1.04);
+            transform: scale(1.018);
+        }
+
+        .card-content {
+            display: flex;
+            flex: 1;
+            flex-direction: column;
+            padding: 20px 8px 8px;
+        }
+
+        .card-title {
+            margin: 0 0 8px;
+            color: var(--text-dark);
+            font-size: clamp(1.08rem, 1.7vw, 1.3rem);
+            font-weight: 760;
+            line-height: 1.22;
+            letter-spacing: 0;
+        }
+
+        .price {
+            color: var(--text-dark);
+            font-weight: 800;
+            font-size: 1.02rem;
+            margin-bottom: 10px;
+        }
+
+        .card-description {
+            max-width: none;
+            margin-bottom: 20px;
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            line-height: 1.55;
+        }
+
+        .card-actions {
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: auto;
+            padding-top: 18px;
+            border-top: 1px solid var(--border-grey);
+        }
+
+        .order-history-section {
+            margin-top: 18px;
+            padding-top: 38px;
+            border-top: 1px solid var(--border-grey);
+        }
+
+        .history-heading {
+            margin-bottom: 18px;
+        }
+
+        .history-heading h2 {
+            margin: 4px 0 0;
+            padding-bottom: 0;
+            border-bottom: 0;
+        }
+
+        .order-history-list {
+            display: grid;
+            gap: 0;
+            border-top: 1px solid var(--border-grey);
+        }
+
+        .history-order {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            gap: 18px;
+            align-items: start;
+            padding: 20px 0;
+            border-bottom: 1px solid var(--border-grey);
+        }
+
+        .history-order-title {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px 14px;
+            align-items: center;
+            margin-bottom: 8px;
+            font-weight: 800;
+        }
+
+        .history-meta,
+        .history-items {
+            color: var(--text-muted);
+            font-size: 0.93rem;
+            line-height: 1.55;
+        }
+
+        .history-total {
+            color: var(--text-dark);
+            font-size: 1rem;
+            font-weight: 800;
+            white-space: nowrap;
+        }
+
+        .history-status {
+            padding: 4px 9px;
+            background: var(--surface-grey);
+            border: 1px solid var(--border-grey);
+            border-radius: 999px;
+            color: var(--text-dark);
+            font-size: 0.76rem;
+            font-weight: 700;
+            text-transform: capitalize;
+        }
+
+        .empty-history {
+            padding: 22px 0;
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--border-grey);
+        }
+
+        .btn,
+        .btn-secondary,
+        .btn-cancel {
+            background: var(--text-dark);
+            color: var(--bg-card);
+            border: 1px solid var(--text-dark);
+            border-radius: 999px;
+            box-shadow: none;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover,
+        .btn-secondary:hover {
+            background: #343a40;
+            border-color: #343a40;
+            color: var(--bg-card);
+            transform: translateY(-1px) scale(1.015);
+        }
+
+        .btn:active,
+        .quantity-btn:active,
+        .payment-method:active,
+        .cart-item-remove:active,
+        .close-cart:active,
+        .close-modal:active {
+            transform: scale(0.97);
+        }
+
+        .btn-cancel {
+            background: transparent;
+            color: var(--text-dark);
+            border-color: var(--border-grey);
+        }
+
+        .btn-cancel:hover {
+            background: var(--surface-grey);
+            color: var(--text-dark);
+            border-color: var(--text-muted);
+        }
+
+        .quantity-control {
+            border: 1px solid var(--border-grey);
+            border-radius: 999px;
+            padding: 4px;
+            background: var(--bg-card);
+        }
+
+        .quantity-btn {
+            background: transparent;
+            color: var(--text-dark);
+            border: 1px solid transparent;
+            transition: background 180ms ease, border-color 180ms ease, transform 180ms ease;
+        }
+
+        .quantity-btn:hover {
+            background: var(--surface-grey);
+            border-color: var(--border-grey);
+        }
+
+        #cart-toggle,
+        .order-number,
+        .nav-action-btn,
+        .admin-link {
+            background: var(--bg-card);
+            color: var(--text-dark);
+            border: 1px solid var(--border-grey);
+            box-shadow: var(--shadow-soft);
+            transition: background 180ms ease, border-color 180ms ease, transform 180ms ease, opacity 180ms ease;
+        }
+
+        #cart-toggle:hover,
+        .nav-action-btn:hover,
+        .admin-link:hover {
+            background: var(--surface-grey);
+            border-color: var(--text-muted);
+            transform: scale(1.04);
+        }
+
+        .admin-link {
+            position: static;
+            width: max-content;
+            max-width: calc(100% - 40px);
+            margin: -54px clamp(18px, 4vw, 56px) 44px auto;
+        }
+
+        #cart-badge {
+            background: var(--text-dark);
+            color: var(--bg-card);
+            border: 1px solid var(--bg-card);
+        }
+
+        .order-number {
+            border-radius: 999px;
+            color: var(--text-dark);
+            position: static;
+            width: max-content;
+            max-width: none;
+            margin: 0;
+        }
+
+        #cart-preview {
+            background: rgba(255, 255, 255, 0.96);
+            border-left: 1px solid var(--border-grey);
+            box-shadow: var(--shadow-soft);
+            z-index: 1500;
+            opacity: 0;
+            transform: translateX(24px) scale(0.985);
+            transition: right 320ms ease, opacity 240ms ease, transform 240ms ease;
+            backdrop-filter: blur(18px);
+        }
+
+        #cart-preview.show {
+            opacity: 1;
+            transform: translateX(0) scale(1);
+        }
+
+        body.cart-open #cart-toggle,
+        body.cart-open .admin-link,
+        body.cart-open .order-number {
+            opacity: 0;
+            pointer-events: none;
+            transform: scale(0.94);
+        }
+
+        .cart-header {
+            border-bottom: 1px solid var(--border-grey);
+        }
+
+        .cart-header h2,
+        .modal-title {
+            color: var(--text-dark);
+            letter-spacing: 0;
+        }
+
+        .close-cart,
+        .close-modal {
+            color: var(--text-muted);
+            border-radius: 999px;
+            transition: background 180ms ease, color 180ms ease, transform 180ms ease;
+        }
+
+        .close-cart:hover,
+        .close-modal:hover {
+            background: var(--surface-grey);
+            color: var(--text-dark);
+        }
+
+        #order-info-preview,
+        .payment-details {
+            background: var(--bg-main);
+            border: 1px solid var(--border-grey);
+            border-radius: var(--radius-premium);
+        }
+
+        #order-info-preview strong {
+            color: var(--text-dark);
+        }
+
+        .cart-item {
+            border-bottom: 1px solid var(--border-grey);
+            transition: background 180ms ease, transform 180ms ease;
+        }
+
+        .cart-item:hover {
+            background: var(--bg-main);
+            transform: scale(1.006);
+        }
+
+        .cart-item-price {
+            color: var(--text-muted);
+        }
+
+        .cart-footer {
+            border-top: 1px solid var(--border-grey);
+        }
+
+        .cart-item-remove {
+            background: transparent;
+            color: var(--text-muted);
+            border: 1px solid var(--border-grey);
+            transition: background 180ms ease, color 180ms ease, transform 180ms ease;
+        }
+
+        .cart-item-remove:hover {
+            background: var(--accent);
+            color: var(--bg-card);
+        }
+
+        .form-group input,
+        .form-group select {
+            background: var(--bg-card);
+            border: 1px solid var(--border-grey);
+            border-radius: var(--radius-premium);
+            color: var(--text-dark);
+            transition: border-color 180ms ease, background 180ms ease, transform 180ms ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            border-color: var(--text-dark);
+            background: var(--bg-card);
+            transform: scale(1.004);
+        }
+
+        .payment-method {
+            background: var(--bg-card);
+            border: 1px solid var(--border-grey);
+            border-radius: var(--radius-premium);
+            transition: background 180ms ease, border-color 180ms ease, transform 180ms ease;
+        }
+
+        .payment-method:hover,
+        .payment-method.selected {
+            background: var(--surface-grey);
+            border-color: var(--text-muted);
+            transform: scale(1.012);
+        }
+
+        .modal {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(248, 249, 250, 0.74);
+            backdrop-filter: blur(12px);
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+            transition: all 0.3s ease;
+        }
+
+        .modal-content {
+            background: var(--bg-card);
+            border: 1px solid var(--border-grey);
+            border-radius: var(--radius-premium);
+            box-shadow: var(--shadow-soft);
+            max-height: calc(100vh - 48px);
+            overflow-y: auto;
+            opacity: 0;
+            transform: scale(0.96) translateY(10px);
+            transition: all 0.3s ease;
+        }
+
+        .modal.is-open {
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+        }
+
+        .modal.is-open .modal-content {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+        }
+
+        .modal-header {
+            border-bottom: 1px solid var(--border-grey);
+            padding-bottom: 1rem;
+        }
+
+        .modal-content-wide {
+            max-width: 760px;
+        }
+
+        .auth-modal-content {
+            max-width: 460px;
+        }
+
+        .modal-kicker {
+            display: block;
+            margin-bottom: 5px;
+            color: var(--text-muted);
+            font-size: 0.72rem;
+            font-weight: 800;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+        }
+
+        .checkout-section {
+            padding-bottom: 18px;
+            margin-bottom: 18px;
+            border-bottom: 1px solid var(--border-grey);
+        }
+
+        .checkout-section:last-child {
+            padding-bottom: 0;
+            margin-bottom: 0;
+            border-bottom: 0;
+        }
+
+        .auth-tabs {
+            display: flex;
+            gap: 4px;
+            padding: 4px;
+            margin: 18px 0;
+            background: var(--bg-main);
+            border: 1px solid var(--border-grey);
+            border-radius: 999px;
+        }
+
+        .auth-tab {
+            flex: 1;
+            min-height: 42px;
+            border: 1px solid transparent;
+            border-radius: 999px;
+            background: transparent;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-weight: 750;
+            transition: all 0.3s ease;
+        }
+
+        .auth-tab:hover {
+            background: var(--surface-grey);
+            color: var(--text-dark);
+        }
+
+        .auth-tab.active {
+            background: var(--text-dark);
+            color: var(--bg-card);
+            border-color: var(--text-dark);
+        }
+
+        .auth-submit {
+            width: 100%;
+            margin-top: 4px;
+        }
+
+        .auth-error {
+            margin-top: 12px;
+            color: var(--accent);
+            font-size: 0.9rem;
+        }
+
+        .auth-switch-copy {
+            margin-top: 16px;
+            color: var(--text-muted);
+            font-size: 0.92rem;
+            text-align: center;
+        }
+
+        .text-link {
+            border: 0;
+            background: transparent;
+            color: var(--text-dark);
+            cursor: pointer;
+            font-weight: 800;
+            text-decoration: underline;
+            text-underline-offset: 3px;
+            transition: all 0.3s ease;
+        }
+
+        .text-link:hover {
+            color: var(--accent);
+        }
+
+        .success-icon {
+            background: var(--surface-grey);
+            color: var(--text-dark);
+            border: 1px solid var(--border-grey);
+        }
+
+        .toast {
+            background: var(--text-dark);
+            border: 1px solid var(--border-grey);
+            box-shadow: var(--shadow-soft);
+        }
+
+        button,
+        .btn,
+        .category-tab,
+        .info-item,
+        .nav-action-btn,
+        #cart-toggle,
+        .admin-link,
+        .card,
+        .card img,
+        .quantity-btn,
+        .payment-method,
+        .cart-item,
+        .cart-item-remove,
+        .close-cart,
+        .close-modal {
+            transition: all 0.3s ease;
+        }
+
+        @keyframes fadeZoomIn {
+            from {
+                opacity: 0;
+                transform: scale(0.96) translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .top-navbar {
+                padding: 12px 18px;
+            }
+
+            .nav-shell {
+                align-items: flex-start;
+                flex-direction: column;
+                gap: 14px;
+            }
+
+            .nav-actions {
+                display: grid;
+                grid-template-columns: minmax(0, 1fr);
+                align-items: stretch;
+                justify-content: stretch;
+                width: 100%;
+                gap: 10px;
+            }
+
+            #customer-info {
+                display: grid;
+                grid-template-columns: minmax(0, 1fr);
+                width: 100%;
+                gap: 8px;
+            }
+
+            .nav-chip,
+            .info-item,
+            .nav-action-btn,
+            #cart-toggle {
+                width: 100%;
+                max-width: 100%;
+                min-width: 0;
+                justify-content: flex-start;
+                flex-wrap: wrap;
+                white-space: normal;
+                overflow-wrap: anywhere;
+                text-align: left;
+                font-size: clamp(0.78rem, 2.6vw, 0.9rem);
+                line-height: 1.25;
+            }
+
+            #cart-toggle {
+                justify-content: center;
+            }
+
+            .menu-filter {
+                align-items: stretch;
+                flex-direction: column;
+                gap: 18px;
+            }
+
+            .category-tabs {
+                justify-content: flex-start;
+                width: 100%;
+            }
+
+            .grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .card img {
+                height: 200px;
+                aspect-ratio: 16 / 9;
+            }
+
+            .card-actions {
+                justify-content: space-between;
+            }
+        }
+
+        @media (max-width: 480px) {
+            main {
+                padding-left: 16px;
+                padding-right: 16px;
+            }
+
+            .card-actions,
+            .cart-actions,
+            .modal-actions {
+                flex-direction: column;
+            }
+
+            .cart-actions .btn,
+            .modal-actions .btn {
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 640px) {
+            body {
+                overflow-x: hidden;
+            }
+
+            .order-number {
+                max-width: 100%;
+                margin: 0;
+                transform: none;
+            }
+
+            .top-navbar {
+                padding: 14px 16px 16px;
+                top: 0;
+            }
+
+            .nav-brand h1 {
+                max-width: 100%;
+                font-size: clamp(1.28rem, 7vw, 2rem);
+                line-height: 1.02;
+            }
+
+            .nav-actions {
+                display: grid;
+                grid-template-columns: minmax(0, 1fr);
+                gap: 8px;
+            }
+
+            #customer-info {
+                display: contents;
+            }
+
+            .nav-chip,
+            .info-item,
+            .nav-action-btn {
+                min-height: 44px;
+                padding: 8px 14px;
+            }
+
+            #cart-toggle {
+                grid-column: 1 / -1;
+                width: 100%;
+                min-height: 48px;
+                justify-content: center;
+                font-size: 0.95rem;
+            }
+
+            main {
+                padding-top: 34px;
+                padding-bottom: 44px;
+            }
+
+            .menu-filter {
+                margin-bottom: 34px;
+                padding: 0 0 24px;
+            }
+
+            .category-tabs {
+                width: 100%;
+                overflow-x: auto;
+            }
+
+            .category-tab {
+                min-height: 40px;
+                padding: 9px 12px;
+                font-size: 0.88rem;
+            }
+
+            .grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .card img {
+                width: 100%;
+                height: 210px;
+                aspect-ratio: 16 / 9;
+                object-fit: cover;
+            }
+
+            .card-actions {
+                align-items: stretch;
+            }
+
+            .history-order {
+                grid-template-columns: 1fr;
+            }
+
+            .history-total {
+                white-space: normal;
+            }
+
+            .admin-link {
+                position: static;
+                width: max-content;
+                max-width: calc(100% - 40px);
+                margin: 20px 20px 32px auto;
+                transform: none;
+            }
+
+            .admin-link:hover {
+                transform: scale(1.02);
+            }
+
+            #cart-preview {
+                width: 100%;
+                max-width: none;
+                right: -100%;
+            }
+
+            #cart-preview.show {
+                right: 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header class="top-navbar">
+        <div class="nav-shell">
+            <div class="nav-brand">
+                <h1>Menu Digital Restoran</h1>
+            </div>
+            <div class="nav-actions">
+                <button type="button" class="nav-action-btn" onclick="openOrderHistory()">
+                    <span>🧾</span>
+                    <span>Order History</span>
+                </button>
+                <button type="button" class="nav-action-btn" onclick="openModal('auth-modal')">
+                    <span>↗</span>
+                    <span id="auth-nav-label">Sign In</span>
+                </button>
+                <button type="button" id="cart-toggle" onclick="toggleCart()" aria-label="Buka keranjang">
+                    <span class="cart-symbol">🛒</span>
+                    <span class="cart-summary">
+                        <span id="cart-count">0</span> item · Rp<span id="cart-total">0</span>
+                    </span>
+                    <span id="cart-badge">0</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div id="cart-preview">
+        <div class="cart-header">
+            <h2>Pesanan Anda</h2>
+            <button class="close-cart" onclick="toggleCart()">×</button>
+        </div>
+
+        <div id="cart-items-container">
+            <div class="empty-cart">Keranjang kosong</div>
+        </div>
+
+        <div class="cart-footer">
+            <div class="cart-total">
+                <span>Total:</span>
+                <span>Rp<span id="cart-preview-total">0</span></span>
+            </div>
+            <div class="cart-actions">
+                <button class="btn" onclick="showCheckoutModal()">Bayar</button>
+                <button class="btn btn-cancel" onclick="showClearCartModal()">Hapus Semua</button>
+            </div>
+        </div>
+    </div>
+
+    <main>
+        <div class="menu-filter">
+            <div class="menu-filter-copy">
+                <span class="menu-filter-kicker">Katalog</span>
+                <span class="menu-filter-title">Pilih kategori menu</span>
+            </div>
+            <nav class="category-tabs" aria-label="Filter kategori menu">
+                <button type="button" class="category-tab active" data-category="all"
+                    onclick="filterMenu('all', this)">Semua Menu</button>
+                <button type="button" class="category-tab" data-category="food"
+                    onclick="filterMenu('food', this)">Makanan</button>
+                <button type="button" class="category-tab" data-category="drink"
+                    onclick="filterMenu('drink', this)">Minuman</button>
+                <button type="button" class="category-tab" data-category="dessert"
+                    onclick="filterMenu('dessert', this)">Dessert</button>
+            </nav>
+        </div>
+
+        <!-- Makanan -->
+        <section id="food-section">
+            <h2>Makanan</h2>
+            <div class="grid">
+                <div class="card" data-category="food" onclick="focusCard(this)">
+                    <img src="https://tse3.mm.bing.net/th/id/OIP.ClVYslsBXxKx4jlcnDzwdAAAAA?rs=1&pid=ImgDetMain&o=7&rm=3"
+                        alt="Nasi Goreng Special">
+                    <div class="card-content">
+                        <p class="card-title">Nasi Goreng Special</p>
+                        <p class="price">Rp20.000</p>
+                        <p class="card-description">Digoreng dengan bumbu rempah, telur, dan ayam suwir.</p>
+                        <div class="card-actions">
+                            <div class="quantity-control">
+                                <button class="quantity-btn"
+                                    onclick="event.stopPropagation(); updateQuantityInCard(this, -1)">-</button>
+                                <span class="quantity-value">0</span>
+                                <button class="quantity-btn"
+                                    onclick="event.stopPropagation(); updateQuantityInCard(this, 1)">+</button>
+                            </div>
+                            <button class="btn"
+                                onclick="event.stopPropagation(); addToCart('Nasi Goreng Special', 20000, this)">Tambah</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" data-category="food" onclick="focusCard(this)">
+                    <img src="https://assets.pikiran-rakyat.com/crop/34x0:2161x1365/x/photo/2022/02/20/1241459943.jpg"
+                        alt="Ayam Geprek">
+                    <div class="card-content">
+                        <p class="card-title">Ayam Geprek</p>
+                        <p class="price">Rp15.000</p>
+                        <p class="card-description">Ayam krispi dan nasi hangat ditambah sambal yang pedas.</p>
+                        <div class="card-actions">
+                            <div class="quantity-control">
+                                <button class="quantity-btn"
+                                    onclick="event.stopPropagation(); updateQuantityInCard(this, -1)">-</button>
+                                <span class="quantity-value">0</span>
+                                <button class="quantity-btn"
+                                    onclick="event.stopPropagation(); updateQuantityInCard(this, 1)">+</button>
+                            </div>
+                            <button class="btn"
+                                onclick="event.stopPropagation(); addToCart('Ayam Geprek', 15000, this)">Tambah</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" data-category="food" onclick="focusCard(this)">
+                    <img src="https://cdn-brilio-net.akamaized.net/news/2024/05/29/286143/2281927-1000xauto-11-resep-rice-bowl-enak.jpg"
+                        alt="Rice Bowl">
+                    <div class="card-content">
+                        <p class="card-title">Rice Bowl</p>
+                        <p class="price">Rp22.000</p>
+                        <p class="card-description">Perpaduan nasi, telur, dan daging dalam satu mangkuk.</p>
+                        <div class="card-actions">
+                            <div class="quantity-control">
+                                <button class="quantity-btn"
+                                    onclick="event.stopPropagation(); updateQuantityInCard(this, -1)">-</button>
+                                <span class="quantity-value">0</span>
+                                <button class="quantity-btn"
+                                    onclick="event.stopPropagation(); updateQuantityInCard(this, 1)">+</button>
+                            </div>
+                            <button class="btn"
+                                onclick="event.stopPropagation(); addToCart('Rice Bowl', 22000, this)">Tambah</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Minuman -->
+        <section id="drink-section">
+            <h2>Minuman</h2>
+            <div class="grid">
+                <div class="card" data-category="drink" onclick="focusCard(this)">
+                    <img src="https://www.astronauts.id/blog/wp-content/uploads/2023/03/Beberapa-Resep-Es-Teh-Manis-Yang-Enggak-Ngebosenin-Untuk-Buka-Puasa-1024x683.jpg"
+                        alt="Es Teh Manis">
+                    <div class="card-content">
+                        <p class="card-title">Es Teh Manis</p>
+                        <p class="price">Rp5.000</p>
+                        <p class="card-description">Teh melati dingin dengan gula tebu alami.</p>
+                        <div class="card-actions">
+                            <div class="quantity-control">
+                                <button class="quantity-btn"
+                                    onclick="event.stopPropagation(); updateQuantityInCard(this, -1)">-</button>
+                                <span class="quantity-value">0</span>
+                                <button class="quantity-btn"
+                                    onclick="event.stopPropagation(); updateQuantityInCard(this, 1)">+</button>
+                            </div>
+                            <button class="btn"
+                                onclick="event.stopPropagation(); addToCart('Es Teh Manis', 5000, this)">Tambah</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" data-category="drink" onclick="focusCard(this)">
+                    <img src="https://cdn.yummy.co.id/content-images/images/20220307/WxbiRNNZCXBodI5OG5Jvf6lHs6XrYIpP-31363436363535383236d41d8cd98f00b204e9800998ecf8427e.jpg"
+                        alt="Jus Alpukat">
+                    <div class="card-content">
+                        <p class="card-title">Jus Alpukat</p>
+                        <p class="price">Rp12.000</p>
+                        <p class="card-description">Buah Alpukat yang segar dengan es batu.</p>
+                        <div class="card-actions">
+                            <div class="quantity-control">
+                                <button class="quantity-btn"
+                                    onclick="event.stopPropagation(); updateQuantityInCard(this, -1)">-</button>
+                                <span class="quantity-value">0</span>
+                                <button class="quantity-btn"
+                                    onclick="event.stopPropagation(); updateQuantityInCard(this, 1)">+</button>
+                            </div>
+                            <button class="btn"
+                                onclick="event.stopPropagation(); addToCart('Jus Alpukat', 12000, this)">Tambah</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" data-category="drink" onclick="focusCard(this)">
+                    <img src="https://s.kaskus.id/images/2017/12/22/10047354_20171222113742.png" alt="Jus Mangga">
+                    <div class="card-content">
+                        <p class="card-title">Jus Mangga</p>
+                        <p class="price">Rp15.000</p>
+                        <p class="card-description">100% mangga harum manis tanpa tambahan gula.</p>
+                        <div class="card-actions">
+                            <div class="quantity-control">
+                                <button class="quantity-btn"
+                                    onclick="event.stopPropagation(); updateQuantityInCard(this, -1)">-</button>
+                                <span class="quantity-value">0</span>
+                                <button class="quantity-btn"
+                                    onclick="event.stopPropagation(); updateQuantityInCard(this, 1)">+</button>
+                            </div>
+                            <button class="btn"
+                                onclick="event.stopPropagation(); addToCart('Jus Mangga', 15000, this)">Tambah</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Dessert -->
+        <section id="dessert-section">
+            <h2>Dessert</h2>
+            <div class="grid">
+                <div class="card" data-category="dessert" onclick="focusCard(this)">
+                    <img src="https://tse4.mm.bing.net/th/id/OIP.aUWwleENEOx37qj6WX8huQHaLN?w=768&h=1163&rs=1&pid=ImgDetMain&o=7&rm=3"
+                        alt="Es Krim Vanilla">
+                    <div class="card-content">
+                        <p class="card-title">Es Krim Vanilla</p>
+                        <p class="price">Rp10.000</p>
+                        <p class="card-description">Es krim lembut dengan aroma vanilla yang enak.</p>
+                        <div class="card-actions">
+                            <div class="quantity-control">
+                                <button class="quantity-btn"
+                                    onclick="event.stopPropagation(); updateQuantityInCard(this, -1)">-</button>
+                                <span class="quantity-value">0</span>
+                                <button class="quantity-btn"
+                                    onclick="event.stopPropagation(); updateQuantityInCard(this, 1)">+</button>
+                            </div>
+                            <button class="btn"
+                                onclick="event.stopPropagation(); addToCart('Es Krim Vanilla', 10000, this)">Tambah</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" data-category="dessert" onclick="focusCard(this)">
+                    <img src="https://tse3.mm.bing.net/th/id/OIP.9huTUXggBuyZwQT3yQFSIgHaE7?rs=1&pid=ImgDetMain&o=7&rm=3"
+                        alt="Pisang Goreng Keju">
+                    <div class="card-content">
+                        <p class="card-title">Pisang Goreng Keju</p>
+                        <p class="price">Rp15.000</p>
+                        <p class="card-description">Pisang raja balut tepung renyah, tabur keju parut.</p>
+                        <div class="card-actions">
+                            <div class="quantity-control">
+                                <button class="quantity-btn"
+                                    onclick="event.stopPropagation(); updateQuantityInCard(this, -1)">-</button>
+                                <span class="quantity-value">0</span>
+                                <button class="quantity-btn"
+                                    onclick="event.stopPropagation(); updateQuantityInCard(this, 1)">+</button>
+                            </div>
+                            <button class="btn"
+                                onclick="event.stopPropagation(); addToCart('Pisang Goreng Keju', 15000, this)">Tambah</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" data-category="dessert" onclick="focusCard(this)">
+                    <img src="https://img-global.cpcdn.com/recipes/d66914757ea5acbb/680x482cq70/kolak-pisang-ubi-ungu-foto-resep-utama.jpg"
+                        alt="Kolak Pisang Ubi">
+                    <div class="card-content">
+                        <p class="card-title">Kolak Pisang Ubi</p>
+                        <p class="price">Rp20.000</p>
+                        <p class="card-description">Kuah santan gula merah hangat, aroma pandan.</p>
+                        <div class="card-actions">
+                            <div class="quantity-control">
+                                <button class="quantity-btn"
+                                    onclick="event.stopPropagation(); updateQuantityInCard(this, -1)">-</button>
+                                <span class="quantity-value">0</span>
+                                <button class="quantity-btn"
+                                    onclick="event.stopPropagation(); updateQuantityInCard(this, 1)">+</button>
+                            </div>
+                            <button class="btn"
+                                onclick="event.stopPropagation(); addToCart('Kolak Pisang Ubi', 20000, this)">Tambah</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Checkout Modal -->
+    <div id="checkout-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Pembayaran</h3>
+                <button class="close-modal" onclick="closeModal('checkout-modal')">×</button>
+            </div>
+            <div class="modal-message">
+                <div class="checkout-section">
+                    <span class="modal-kicker">Customer Details</span>
+                    <div class="form-group">
+                        <label for="customer-name">Nama Pelanggan</label>
+                        <input type="text" id="customer-name" placeholder="Masukkan nama pelanggan" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="table-number">Nomor Meja</label>
+                        <select id="table-number" required>
+                            <option value="" disabled selected>Pilih nomor meja</option>
+                            <option value="1">Meja 1</option>
+                            <option value="2">Meja 2</option>
+                            <option value="3">Meja 3</option>
+                            <option value="4">Meja 4</option>
+                            <option value="5">Meja 5</option>
+                            <option value="6">Meja 6</option>
+                            <option value="7">Meja 7</option>
+                            <option value="8">Meja 8</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="checkout-section">
+                    <span class="modal-kicker">Payment Method</span>
+                <div class="payment-methods">
+                    <div class="payment-method" onclick="selectPaymentMethod(this)">
+                        <input type="radio" name="payment" id="cash" value="cash">
+                        <label for="cash">
+                            <span class="payment-icon">💵</span>
+                            <span>Tunai</span>
+                        </label>
+                    </div>
+                    <div class="payment-method" onclick="selectPaymentMethod(this)">
+                        <input type="radio" name="payment" id="qris" value="qris">
+                        <label for="qris">
+                            <span class="payment-icon">📱</span>
+                            <span>QRIS</span>
+                        </label>
+                    </div>
+                    <div class="payment-method" onclick="selectPaymentMethod(this)">
+                        <input type="radio" name="payment" id="bank-transfer" value="bank-transfer">
+                        <label for="bank-transfer">
+                            <span class="payment-icon">🏦</span>
+                            <span>Transfer Bank</span>
+                        </label>
+                    </div>
+                </div>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-cancel" onclick="closeModal('checkout-modal')">Batal</button>
+                <button class="btn" onclick="processPayment()">Bayar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Clear Cart Modal -->
+    <div id="clear-cart-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Hapus Semua Item</h3>
+                <button class="close-modal" onclick="closeModal('clear-cart-modal')">×</button>
+            </div>
+            <div class="modal-message">
+                Apakah Anda yakin ingin menghapus semua item dari keranjang?
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-cancel" onclick="closeModal('clear-cart-modal')">Batal</button>
+                <button class="btn" onclick="clearCart()">Ya, Hapus</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div id="success-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Pesanan Berhasil</h3>
+                <button class="close-modal" onclick="closeModal('success-modal')">×</button>
+            </div>
+            <div class="modal-message" style="text-align: center;">
+                <div class="success-icon">✓</div>
+                <p>Pesanan Anda telah berhasil diproses!</p>
+                <p>No. Pesanan: <strong id="success-order-number">-</strong></p>
+                <p>Total: <strong>Rp<span id="success-order-total">0</span></strong></p>
+                <p>Terima kasih telah memesan di restoran kami.</p>
+            </div>
+            <div class="modal-actions" style="justify-content: center;">
+                <button class="btn" onclick="closeModal('success-modal')">Tutup</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Order History Modal -->
+    <div id="order-history-modal" class="modal">
+        <div class="modal-content modal-content-wide">
+            <div class="modal-header">
+                <div>
+                    <span class="modal-kicker">History</span>
+                    <h3 class="modal-title">Order History</h3>
+                </div>
+                <button class="close-modal" onclick="closeModal('order-history-modal')">×</button>
+            </div>
+            <div class="modal-message">
+                <div id="order-history-list" class="order-history-list">
+                    <p class="empty-history">No order history yet.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sign In Modal -->
+    <div id="auth-modal" class="modal">
+        <div class="modal-content auth-modal-content">
+            <div class="modal-header">
+                <div>
+                    <span class="modal-kicker">Account</span>
+                    <h3 class="modal-title">Sign In</h3>
+                </div>
+                <button class="close-modal" onclick="closeModal('auth-modal')">×</button>
+            </div>
+
+            <div class="auth-tabs" role="tablist" aria-label="Sign in options">
+                <button type="button" class="auth-tab active" data-auth-tab="customer"
+                    onclick="switchAuthTab('customer')">Customer</button>
+                <button type="button" class="auth-tab" data-auth-tab="admin"
+                    onclick="switchAuthTab('admin')">Admin</button>
+            </div>
+
+            <div id="customer-auth-panel" class="auth-panel">
+                <div id="customer-signin-view">
+                    <div class="form-group">
+                        <label for="customer-login-username">Username</label>
+                        <input type="text" id="customer-login-username" placeholder="Enter username">
+                    </div>
+                    <div class="form-group">
+                        <label for="customer-login-password">Password</label>
+                        <input type="password" id="customer-login-password" placeholder="Enter password">
+                    </div>
+                    <button type="button" class="btn auth-submit" onclick="customerSignIn()">Sign In</button>
+                    <p id="customer-auth-error" class="auth-error" hidden>Invalid username or password.</p>
+                    <p class="auth-switch-copy">New customer?
+                        <button type="button" class="text-link" onclick="toggleCustomerCreateMode(true)">Create Account</button>
+                    </p>
+                </div>
+
+                <div id="customer-create-view" hidden>
+                    <div class="form-group">
+                        <label for="customer-create-name">Full Name</label>
+                        <input type="text" id="customer-create-name" placeholder="Enter full name">
+                    </div>
+                    <div class="form-group">
+                        <label for="customer-create-username">Username</label>
+                        <input type="text" id="customer-create-username" placeholder="Choose username">
+                    </div>
+                    <div class="form-group">
+                        <label for="customer-create-password">Password</label>
+                        <input type="password" id="customer-create-password" placeholder="Create password">
+                    </div>
+                    <button type="button" class="btn auth-submit" onclick="createCustomerAccount()">Create Account</button>
+                    <p id="customer-create-error" class="auth-error" hidden>Complete all fields with a unique username.</p>
+                    <p class="auth-switch-copy">Already have an account?
+                        <button type="button" class="text-link" onclick="toggleCustomerCreateMode(false)">Sign In</button>
+                    </p>
+                </div>
+            </div>
+
+            <div id="admin-auth-panel" class="auth-panel" hidden>
+                <div class="form-group">
+                    <label for="index-admin-username">Admin Username</label>
+                    <input type="text" id="index-admin-username" placeholder="Enter admin username">
+                </div>
+                <div class="form-group">
+                    <label for="index-admin-password">Admin Password</label>
+                    <input type="password" id="index-admin-password" placeholder="Enter admin password">
+                </div>
+                <button type="button" class="btn auth-submit" onclick="adminSignInFromIndex()">Admin Sign In</button>
+                <p id="admin-auth-error" class="auth-error" hidden>Invalid admin credentials.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast"></div>
+
+    <script src="assets/js/api-client.js"></script>
+    <script>
+        // Data state
+        const ADMIN_CREDENTIALS = {
+            username: 'admin',
+            password: 'password123'
+        };
+        const USERS_STORAGE_KEY = 'restaurantUsers';
+        const CART_STORAGE_KEY = 'restaurantCart';
+        const CUSTOMER_AUTH_TOKEN_KEY = 'restaurantCustomerToken';
+        const CUSTOMER_SESSION_KEY = 'restaurantCustomerSession';
+        const ADMIN_AUTH_TOKEN_KEY = 'restaurantAdminToken';
+        const DEFAULT_CUSTOMER_USERS = [
+            { username: 'user1', password: 'user123', name: 'Pelanggan 1', email: 'user1@example.com', phone: '081234567890', address: 'Jl. Contoh No. 1' },
+            { username: 'user2', password: 'user123', name: 'Pelanggan 2', email: 'user2@example.com', phone: '082345678901', address: 'Jl. Contoh No. 2' }
+        ];
+        let cart = [];
+        let customerInfo = {
+            name: '',
+            tableNumber: ''
+        };
+        let orderNumber = null;
+        let pendingCustomerAuthAction = null;
+        let apiAvailable = false;
+
+        // DOM Elements
+        const cartPreview = document.getElementById('cart-preview');
+        const cartItemsContainer = document.getElementById('cart-items-container');
+        const cartCountElement = document.getElementById('cart-count');
+        const cartTotalElement = document.getElementById('cart-total');
+        const cartBadgeElement = document.getElementById('cart-badge');
+        const cartPreviewTotalElement = document.getElementById('cart-preview-total');
+        const successOrderNumber = document.getElementById('success-order-number');
+        const successOrderTotal = document.getElementById('success-order-total');
+        const orderHistoryList = document.getElementById('order-history-list');
+        const authNavLabel = document.getElementById('auth-nav-label');
+        const toastElement = document.getElementById('toast');
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', async function () {
+            ensureCustomerUsers();
+            apiAvailable = await RestaurantAPI.isAvailable();
+            hydrateCustomerSession();
+            loadCartFromStorage();
+            updateCartUI();
+            loadCheckoutTablesFromApi();
+            renderOrderHistory();
+        });
+
+        window.addEventListener('storage', function (event) {
+            if (event.key === 'restaurantOrders') {
+                renderOrderHistory();
+            }
+        });
+
+        // Helper functions
+        function generateOrderNumber() {
+            const now = new Date();
+            const datePart = now.getFullYear().toString().substr(-2) +
+                (now.getMonth() + 1).toString().padStart(2, '0') +
+                now.getDate().toString().padStart(2, '0');
+            const randomPart = Math.floor(1000 + Math.random() * 9000);
+            return datePart + randomPart;
+        }
+
+        function formatCurrency(value) {
+            return Number(value || 0).toLocaleString('id-ID');
+        }
+
+        function formatOrderDate(timestamp) {
+            if (!timestamp) {
+                return '-';
+            }
+
+            try {
+                return new Intl.DateTimeFormat('id-ID', {
+                    dateStyle: 'medium',
+                    timeStyle: 'short'
+                }).format(new Date(timestamp));
+            } catch (error) {
+                return '-';
+            }
+        }
+
+        function escapeHtml(value) {
+            const escapeMap = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+
+            return String(value ?? '').replace(/[&<>"']/g, char => escapeMap[char]);
+        }
+
+        function showToast(message) {
+            toastElement.textContent = message;
+            toastElement.classList.add('show');
+            setTimeout(() => {
+                toastElement.classList.remove('show');
+            }, 3000);
+        }
+
+        function setCustomerSession(user, token = '') {
+            localStorage.setItem('userLoggedIn', 'true');
+            localStorage.removeItem('adminLoggedIn');
+            localStorage.setItem('currentUser', user.username);
+            localStorage.setItem(CUSTOMER_SESSION_KEY, JSON.stringify(user));
+
+            if (token) {
+                localStorage.setItem(CUSTOMER_AUTH_TOKEN_KEY, token);
+            }
+        }
+
+        function getStoredCustomerSession() {
+            const rawSession = localStorage.getItem(CUSTOMER_SESSION_KEY);
+
+            if (!rawSession) {
+                return null;
+            }
+
+            try {
+                return JSON.parse(rawSession);
+            } catch (error) {
+                return null;
+            }
+        }
+
+        function getCustomerToken() {
+            return localStorage.getItem(CUSTOMER_AUTH_TOKEN_KEY) || '';
+        }
+
+        function getSignedInCustomer() {
+            if (localStorage.getItem('userLoggedIn') !== 'true') {
+                return null;
+            }
+
+            const storedSession = getStoredCustomerSession();
+            if (storedSession) {
+                return storedSession;
+            }
+
+            const username = localStorage.getItem('currentUser');
+
+            if (!username) {
+                return null;
+            }
+
+            return loadCustomerUsers().find(user => user.username === username) || null;
+        }
+
+        function isCustomerSignedIn() {
+            return Boolean(getSignedInCustomer());
+        }
+
+        function hydrateCustomerSession() {
+            const customer = getSignedInCustomer();
+
+            document.body.classList.toggle('customer-signed-in', Boolean(customer));
+
+            if (authNavLabel) {
+                authNavLabel.textContent = customer ? (customer.name || customer.username) : 'Sign In';
+            }
+
+            if (customer) {
+                customerInfo.name = customer.name || customer.username;
+            }
+        }
+
+        function requireCustomerSignIn(message, afterSignIn) {
+            if (isCustomerSignedIn()) {
+                return true;
+            }
+
+            pendingCustomerAuthAction = typeof afterSignIn === 'function' ? afterSignIn : null;
+            switchAuthTab('customer');
+            toggleCustomerCreateMode(false);
+            openModal('auth-modal');
+            showToast(message || 'Please sign in first.');
+            return false;
+        }
+
+        function runPendingCustomerAuthAction() {
+            const action = pendingCustomerAuthAction;
+            pendingCustomerAuthAction = null;
+
+            if (typeof action === 'function') {
+                window.setTimeout(action, 0);
+            }
+        }
+
+        function getCustomerCartStorageKey() {
+            const customer = getSignedInCustomer();
+            return customer ? `${CART_STORAGE_KEY}:${customer.username}` : null;
+        }
+
+        function normalizeApiOrder(order) {
+            return {
+                id: order.id || order.order_number || order.orderNumber,
+                orderNumber: order.order_number || order.orderNumber || order.id,
+                customerName: order.customer_name || order.customerName || '-',
+                customerUsername: order.customer_username || order.customerUsername || '',
+                customerAccountName: order.customer_account_name || order.customerAccountName || '',
+                tableNumber: order.table_number || order.tableNumber || '',
+                items: Array.isArray(order.items) ? order.items : [],
+                total: Number(order.total || 0),
+                status: order.status || 'pending',
+                paymentMethod: order.payment_method || order.paymentMethod || 'cash',
+                timestamp: order.timestamp
+            };
+        }
+
+        // Cart functions
+        function addToCart(name, price, buttonElement) {
+            const card = buttonElement.closest('.card');
+            const quantityElement = card.querySelector('.quantity-value');
+            let quantity = parseInt(quantityElement.textContent);
+
+            if (quantity < 1) {
+                showToast('Silakan tentukan jumlah terlebih dahulu');
+                return;
+            }
+
+            if (!requireCustomerSignIn('Silakan sign in terlebih dahulu untuk menambahkan menu.', function () {
+                addToCart(name, price, buttonElement);
+            })) {
+                return;
+            }
+
+            const existingItemIndex = cart.findIndex(item => item.name === name);
+
+            if (existingItemIndex !== -1) {
+                cart[existingItemIndex].quantity += quantity;
+            } else {
+                cart.push({
+                    name,
+                    price,
+                    quantity
+                });
+            }
+
+            quantityElement.textContent = '0';
+            saveCartToStorage();
+            updateCartUI();
+            showToast(`${quantity} ${name} ditambahkan ke keranjang`);
+        }
+
+        function updateCartItemQuantity(name, newQuantity) {
+            const itemIndex = cart.findIndex(item => item.name === name);
+
+            if (itemIndex !== -1) {
+                if (newQuantity <= 0) {
+                    cart.splice(itemIndex, 1);
+                } else {
+                    cart[itemIndex].quantity = newQuantity;
+                }
+
+                saveCartToStorage();
+                updateCartUI();
+            }
+        }
+
+        function removeCartItem(name) {
+            cart = cart.filter(item => item.name !== name);
+            saveCartToStorage();
+            updateCartUI();
+            showToast('Item dihapus dari keranjang');
+        }
+
+        function clearCart() {
+            cart = [];
+            saveCartToStorage();
+            updateCartUI();
+            closeModal('clear-cart-modal');
+            showToast('Keranjang dikosongkan');
+        }
+
+        function calculateCartTotal() {
+            return cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+        }
+
+        function saveCartToStorage() {
+            const storageKey = getCustomerCartStorageKey();
+
+            if (!storageKey) {
+                return;
+            }
+
+            localStorage.setItem(storageKey, JSON.stringify(cart));
+        }
+
+        function loadCartFromStorage() {
+            const storageKey = getCustomerCartStorageKey();
+
+            if (!storageKey) {
+                cart = [];
+                return;
+            }
+
+            const savedCart = localStorage.getItem(storageKey);
+
+            if (savedCart) {
+                try {
+                    const parsedCart = JSON.parse(savedCart);
+                    cart = Array.isArray(parsedCart) ? parsedCart : [];
+                } catch (error) {
+                    console.error('Gagal membaca keranjang:', error);
+                    cart = [];
+                }
+            } else {
+                cart = [];
+            }
+        }
+
+        function loadOrdersFromStorage() {
+            const savedOrders = localStorage.getItem('restaurantOrders');
+
+            if (!savedOrders) {
+                return [];
+            }
+
+            try {
+                const orders = JSON.parse(savedOrders);
+                return Array.isArray(orders) ? orders : [];
+            } catch (error) {
+                console.error('Gagal membaca data pesanan:', error);
+                return [];
+            }
+        }
+
+        function saveOrderToStorage(order) {
+            const orders = loadOrdersFromStorage();
+            orders.push(order);
+            localStorage.setItem('restaurantOrders', JSON.stringify(orders));
+        }
+
+        async function saveOrder(order) {
+            const token = getCustomerToken();
+
+            if (apiAvailable && token) {
+                const response = await RestaurantAPI.createOrder(token, {
+                    customerName: order.customerName,
+                    tableNumber: order.tableNumber,
+                    paymentMethod: order.paymentMethod,
+                    items: order.items
+                });
+
+                return normalizeApiOrder(response.order);
+            }
+
+            saveOrderToStorage(order);
+            return order;
+        }
+
+        function loadCustomerUsers() {
+            const rawUsers = localStorage.getItem(USERS_STORAGE_KEY);
+
+            if (!rawUsers) {
+                return [...DEFAULT_CUSTOMER_USERS];
+            }
+
+            try {
+                const users = JSON.parse(rawUsers);
+                return Array.isArray(users) ? users : [...DEFAULT_CUSTOMER_USERS];
+            } catch (error) {
+                console.error('Gagal membaca data customer:', error);
+                return [...DEFAULT_CUSTOMER_USERS];
+            }
+        }
+
+        function saveCustomerUsers(users) {
+            localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
+        }
+
+        function ensureCustomerUsers() {
+            if (!localStorage.getItem(USERS_STORAGE_KEY)) {
+                saveCustomerUsers(DEFAULT_CUSTOMER_USERS);
+            }
+        }
+
+        async function loadCheckoutTablesFromApi() {
+            if (!apiAvailable) {
+                return;
+            }
+
+            const tableSelect = document.getElementById('table-number');
+            if (!tableSelect) {
+                return;
+            }
+
+            try {
+                const response = await RestaurantAPI.getTables();
+                const tables = response.tables || [];
+
+                if (tables.length === 0) {
+                    return;
+                }
+
+                tableSelect.innerHTML = '<option value="" disabled selected>Pilih nomor meja</option>';
+                tables.forEach(table => {
+                    const option = document.createElement('option');
+                    option.value = table.number;
+                    option.textContent = `Meja ${table.number}`;
+                    tableSelect.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Gagal memuat data meja dari API:', error);
+            }
+        }
+
+        async function loadCustomerOrders() {
+            const customer = getSignedInCustomer();
+
+            if (!customer) {
+                return [];
+            }
+
+            const token = getCustomerToken();
+
+            if (apiAvailable && token) {
+                const response = await RestaurantAPI.getOrders(token);
+                return (response.orders || []).map(normalizeApiOrder);
+            }
+
+            return loadOrdersFromStorage().filter(order => {
+                if (order.customerUsername) {
+                    return order.customerUsername === customer.username;
+                }
+
+                return order.customerName === customer.name;
+            });
+        }
+
+        async function renderOrderHistory() {
+            if (!orderHistoryList) {
+                return;
+            }
+
+            const customer = getSignedInCustomer();
+
+            if (!customer) {
+                orderHistoryList.innerHTML = '<p class="empty-history">Please sign in to view your order history.</p>';
+                return;
+            }
+
+            let orders = [];
+
+            try {
+                orders = (await loadCustomerOrders()).slice().reverse();
+            } catch (error) {
+                console.error('Gagal membaca riwayat pesanan:', error);
+                orderHistoryList.innerHTML = '<p class="empty-history">Riwayat pesanan gagal dimuat.</p>';
+                return;
+            }
+
+            if (orders.length === 0) {
+                orderHistoryList.innerHTML = '<p class="empty-history">Belum ada riwayat pemesanan.</p>';
+                return;
+            }
+
+            orderHistoryList.innerHTML = orders.map(order => {
+                const orderId = escapeHtml(order.orderNumber || order.id || '-');
+                const customerName = escapeHtml(order.customerName || '-');
+                const tableNumber = escapeHtml(order.tableNumber || '-');
+                const status = escapeHtml(order.status || 'pending');
+                const statusText = status === 'completed' ? 'Selesai' : 'Diproses';
+                const orderedItems = Array.isArray(order.items) ? order.items : [];
+                const itemSummary = orderedItems.length > 0
+                    ? orderedItems.map(item => `${Number(item.quantity || 0)}x ${escapeHtml(item.name || '-')}`).join(', ')
+                    : '-';
+
+                return `
+                    <article class="history-order">
+                        <div>
+                            <div class="history-order-title">
+                                <span>No. Pesanan: ${orderId}</span>
+                                <span class="history-status">${statusText}</span>
+                            </div>
+                            <p class="history-meta">Nama: ${customerName} &middot; Meja: ${tableNumber} &middot; ${formatOrderDate(order.timestamp)}</p>
+                            <p class="history-items">${itemSummary}</p>
+                        </div>
+                        <div class="history-total">Rp${formatCurrency(order.total)}</div>
+                    </article>
+                `;
+            }).join('');
+        }
+
+        function updateCartUI() {
+            // Update cart count and total
+            const itemCount = cart.reduce((count, item) => count + item.quantity, 0);
+            const total = calculateCartTotal();
+
+            cartCountElement.textContent = itemCount;
+            cartTotalElement.textContent = total.toLocaleString('id-ID');
+            cartBadgeElement.textContent = itemCount;
+            cartPreviewTotalElement.textContent = total.toLocaleString('id-ID');
+
+            // Update cart items list
+            if (cart.length === 0) {
+                cartItemsContainer.innerHTML = '<div class="empty-cart">Keranjang kosong</div>';
+                return;
+            }
+
+            cartItemsContainer.innerHTML = '';
+            cart.forEach(item => {
+                const itemTotal = item.price * item.quantity;
+                const cartItemElement = document.createElement('div');
+                cartItemElement.className = 'cart-item';
+                cartItemElement.innerHTML = `
+                    <div class="cart-item-info">
+                        <div class="cart-item-name">${item.name}</div>
+                        <div class="cart-item-price">Rp${item.price.toLocaleString('id-ID')} x ${item.quantity}</div>
+                        <div class="cart-item-quantity">
+                            <button class="quantity-btn" onclick="updateCartItemQuantity('${item.name}', ${item.quantity - 1})">-</button>
+                            <span>${item.quantity}</span>
+                            <button class="quantity-btn" onclick="updateCartItemQuantity('${item.name}', ${item.quantity + 1})">+</button>
+                        </div>
+                    </div>
+                    <div class="cart-item-actions">
+                        <div class="cart-item-total">Rp${itemTotal.toLocaleString('id-ID')}</div>
+                        <button class="cart-item-remove" onclick="removeCartItem('${item.name}')">×</button>
+                    </div>
+                `;
+                cartItemsContainer.appendChild(cartItemElement);
+            });
+        }
+
+        // Modal functions
+        function toggleCart() {
+            const isOpen = cartPreview.classList.contains('show');
+
+            if (!isOpen && !requireCustomerSignIn('Silakan sign in terlebih dahulu untuk membuka keranjang.', toggleCart)) {
+                return;
+            }
+
+            cartPreview.classList.toggle('show');
+            document.body.classList.toggle('cart-open', cartPreview.classList.contains('show'));
+        }
+
+        function openModal(modalId) {
+            if (modalId === 'order-history-modal' && !requireCustomerSignIn('Silakan sign in terlebih dahulu untuk melihat order history.', openOrderHistory)) {
+                return;
+            }
+
+            const modal = document.getElementById(modalId);
+
+            if (!modal) {
+                return;
+            }
+
+            if (modalId === 'order-history-modal') {
+                renderOrderHistory();
+            }
+
+            modal.classList.add('is-open');
+            modal.setAttribute('aria-hidden', 'false');
+        }
+
+        function openOrderHistory() {
+            openModal('order-history-modal');
+        }
+
+        function closeModal(modalId) {
+            const modal = document.getElementById(modalId);
+
+            if (!modal) {
+                return;
+            }
+
+            modal.classList.remove('is-open');
+            modal.setAttribute('aria-hidden', 'true');
+        }
+
+        function showCheckoutModal() {
+            if (!requireCustomerSignIn('Silakan sign in terlebih dahulu untuk checkout.', showCheckoutModal)) {
+                return;
+            }
+
+            if (cart.length === 0) {
+                showToast('Keranjang kosong, silakan tambahkan item terlebih dahulu');
+                return;
+            }
+
+            const customer = getSignedInCustomer();
+            document.getElementById('customer-name').value = customer ? (customer.name || customer.username) : customerInfo.name;
+            document.getElementById('table-number').value = customerInfo.tableNumber;
+            cartPreview.classList.remove('show');
+            document.body.classList.remove('cart-open');
+            openModal('checkout-modal');
+        }
+
+        function showClearCartModal() {
+            if (cart.length === 0) {
+                showToast('Keranjang sudah kosong');
+                return;
+            }
+            openModal('clear-cart-modal');
+        }
+
+        function selectPaymentMethod(element) {
+            const paymentMethods = document.querySelectorAll('.payment-method');
+            paymentMethods.forEach(method => method.classList.remove('selected'));
+            element.classList.add('selected');
+            element.querySelector('input').checked = true;
+        }
+
+        function switchAuthTab(tabName) {
+            const tabs = document.querySelectorAll('.auth-tab');
+            const customerPanel = document.getElementById('customer-auth-panel');
+            const adminPanel = document.getElementById('admin-auth-panel');
+            const isAdmin = tabName === 'admin';
+
+            tabs.forEach(tab => {
+                tab.classList.toggle('active', tab.dataset.authTab === tabName);
+            });
+
+            if (customerPanel) customerPanel.hidden = isAdmin;
+            if (adminPanel) adminPanel.hidden = !isAdmin;
+        }
+
+        function toggleCustomerCreateMode(showCreateForm) {
+            const signInView = document.getElementById('customer-signin-view');
+            const createView = document.getElementById('customer-create-view');
+
+            if (signInView) signInView.hidden = showCreateForm;
+            if (createView) createView.hidden = !showCreateForm;
+        }
+
+        function setAuthError(errorId, shouldShow) {
+            const errorElement = document.getElementById(errorId);
+
+            if (errorElement) {
+                errorElement.hidden = !shouldShow;
+            }
+        }
+
+        async function customerSignIn() {
+            const username = document.getElementById('customer-login-username').value.trim();
+            const password = document.getElementById('customer-login-password').value;
+            let user = null;
+            let token = '';
+
+            if (apiAvailable) {
+                try {
+                    const response = await RestaurantAPI.customerLogin({ username, password });
+                    user = response.user;
+                    token = response.token;
+                } catch (error) {
+                    setAuthError('customer-auth-error', true);
+                    return;
+                }
+            } else {
+                user = loadCustomerUsers().find(item => item.username === username && item.password === password);
+            }
+
+            if (!user) {
+                setAuthError('customer-auth-error', true);
+                return;
+            }
+
+            setCustomerSession(user, token);
+            hydrateCustomerSession();
+            loadCartFromStorage();
+            updateCartUI();
+            renderOrderHistory();
+            setAuthError('customer-auth-error', false);
+            closeModal('auth-modal');
+            showToast(`Signed in as ${user.name || user.username}`);
+            runPendingCustomerAuthAction();
+        }
+
+        async function createCustomerAccount() {
+            const name = document.getElementById('customer-create-name').value.trim();
+            const username = document.getElementById('customer-create-username').value.trim();
+            const password = document.getElementById('customer-create-password').value;
+            const users = loadCustomerUsers();
+            const isInvalid = !name || !username || !password || (!apiAvailable && users.some(user => user.username === username));
+
+            if (isInvalid) {
+                setAuthError('customer-create-error', true);
+                return;
+            }
+
+            if (apiAvailable) {
+                try {
+                    await RestaurantAPI.customerRegister({ username, password, name });
+                } catch (error) {
+                    setAuthError('customer-create-error', true);
+                    return;
+                }
+            } else {
+                users.push({
+                    username,
+                    password,
+                    name,
+                    email: '',
+                    phone: '',
+                    address: ''
+                });
+                saveCustomerUsers(users);
+            }
+
+            setAuthError('customer-create-error', false);
+            toggleCustomerCreateMode(false);
+            document.getElementById('customer-login-username').value = username;
+            document.getElementById('customer-login-password').value = password;
+            showToast('Account created. You can sign in now.');
+        }
+
+        async function adminSignInFromIndex() {
+            const username = document.getElementById('index-admin-username').value.trim();
+            const password = document.getElementById('index-admin-password').value;
+
+            if (apiAvailable) {
+                try {
+                    const response = await RestaurantAPI.adminLogin({ username, password });
+                    localStorage.setItem(ADMIN_AUTH_TOKEN_KEY, response.token);
+                } catch (error) {
+                    setAuthError('admin-auth-error', true);
+                    return;
+                }
+            } else {
+                if (username !== ADMIN_CREDENTIALS.username || password !== ADMIN_CREDENTIALS.password) {
+                    setAuthError('admin-auth-error', true);
+                    return;
+                }
+            }
+
+            localStorage.setItem('adminLoggedIn', 'true');
+            localStorage.removeItem('userLoggedIn');
+            localStorage.removeItem('currentUser');
+            localStorage.removeItem(CUSTOMER_AUTH_TOKEN_KEY);
+            localStorage.removeItem(CUSTOMER_SESSION_KEY);
+            setAuthError('admin-auth-error', false);
+            window.location.href = 'admin.html';
+        }
+
+        // Payment processing
+        async function processPayment() {
+            const signedInCustomer = getSignedInCustomer();
+
+            if (!signedInCustomer) {
+                requireCustomerSignIn('Silakan sign in terlebih dahulu untuk menyelesaikan pesanan.', function () {
+                    openModal('checkout-modal');
+                });
+                return;
+            }
+
+            if (cart.length === 0) {
+                showToast('Keranjang kosong, silakan tambahkan item terlebih dahulu');
+                return;
+            }
+
+            const customerName = document.getElementById('customer-name').value.trim() || signedInCustomer.name || signedInCustomer.username;
+            const tableNumber = document.getElementById('table-number').value;
+
+            if (!customerName || !tableNumber) {
+                showToast('Silakan isi nama pelanggan dan nomor meja');
+                return;
+            }
+
+            const selectedPayment = document.querySelector('input[name="payment"]:checked');
+
+            if (!selectedPayment) {
+                showToast('Silakan pilih metode pembayaran');
+                return;
+            }
+
+            customerInfo.name = customerName;
+            customerInfo.tableNumber = tableNumber;
+
+            const total = calculateCartTotal();
+            orderNumber = generateOrderNumber();
+            const completedOrderNumber = orderNumber;
+            const order = {
+                id: completedOrderNumber,
+                orderNumber: completedOrderNumber,
+                customerName,
+                customerUsername: signedInCustomer.username,
+                customerAccountName: signedInCustomer.name || signedInCustomer.username,
+                tableNumber,
+                items: cart.map(item => ({
+                    name: item.name,
+                    price: item.price,
+                    quantity: item.quantity,
+                    subtotal: item.price * item.quantity
+                })),
+                total,
+                status: 'pending',
+                paymentMethod: selectedPayment.value,
+                timestamp: new Date().toISOString()
+            };
+
+            try {
+                const savedOrder = await saveOrder(order);
+                order.id = savedOrder.id;
+                order.orderNumber = savedOrder.orderNumber;
+                order.timestamp = savedOrder.timestamp || order.timestamp;
+            } catch (error) {
+                console.error('Gagal menyimpan pesanan:', error);
+                showToast('Pesanan gagal disimpan. Silakan coba lagi.');
+                return;
+            }
+
+            renderOrderHistory();
+
+            successOrderNumber.textContent = order.orderNumber;
+            successOrderTotal.textContent = total.toLocaleString('id-ID');
+
+            closeModal('checkout-modal');
+            openModal('success-modal');
+
+            // Reset for new order
+            cart = [];
+            saveCartToStorage();
+            updateCartUI();
+            orderNumber = null;
+        }
+
+        // Menu functions
+        function filterMenu(category, activeTab) {
+            const cards = document.querySelectorAll('.card');
+            const tabs = document.querySelectorAll('.category-tab');
+            const menuSections = document.querySelectorAll('main section');
+
+            tabs.forEach(tab => {
+                const isActive = activeTab ? tab === activeTab : tab.dataset.category === category;
+                tab.classList.toggle('active', isActive);
+            });
+
+            cards.forEach(card => {
+                const shouldShow = category === 'all' || card.dataset.category === category;
+                card.style.display = '';
+                card.classList.toggle('is-hidden-by-filter', !shouldShow);
+            });
+
+            menuSections.forEach(section => {
+                const sectionCards = Array.from(section.querySelectorAll('.card'));
+                const hasVisibleCard = sectionCards.some(card => !card.classList.contains('is-hidden-by-filter'));
+                section.classList.toggle('menu-section-hidden', !hasVisibleCard);
+            });
+        }
+
+        function focusCard(card) {
+            // Just for visual feedback, can be enhanced
+            card.style.transform = 'scale(1.02)';
+            setTimeout(() => {
+                card.style.transform = '';
+            }, 200);
+        }
+
+        function updateQuantityInCard(button, change) {
+            const quantityElement = button.closest('.quantity-control').querySelector('.quantity-value');
+            let quantity = parseInt(quantityElement.textContent) + change;
+            quantity = Math.max(0, quantity);
+            quantityElement.textContent = quantity;
+        }
+    </script>
+</body>
+
+</html>

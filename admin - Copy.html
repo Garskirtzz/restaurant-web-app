@@ -1,0 +1,2109 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Panel Restoran</title>
+    <style>
+        :root {
+            --primary: #f45656;
+            --secondary: #ff9a3c;
+            --bg: #f5f5f5;
+            --card-bg: #ffffff;
+            --text: #333;
+            --light-text: #666;
+            --radius: 8px;
+            --shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+        }
+
+        /* Login Page Styles */
+        .login-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: var(--bg);
+        }
+
+        .login-form {
+            background: white;
+            padding: 2rem;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .login-form h1 {
+            color: var(--primary);
+            margin-bottom: 1.5rem;
+        }
+
+        .login-tabs {
+            display: flex;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .login-tab {
+            flex: 1;
+            padding: 0.8rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .login-tab.active {
+            border-bottom: 2px solid var(--primary);
+            color: var(--primary);
+            font-weight: 500;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+            text-align: left;
+            position: relative;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 0.8rem;
+            border: 1px solid #ddd;
+            border-radius: var(--radius);
+            font-size: 1rem;
+        }
+
+        .password-wrapper {
+            position: relative;
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: var(--light-text);
+            background: none;
+            border: none;
+            font-size: 1rem;
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 0.8rem;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: var(--radius);
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .login-btn:hover {
+            background: #e04a4a;
+        }
+
+        .register-btn {
+            width: 100%;
+            padding: 0.8rem;
+            background: var(--secondary);
+            color: white;
+            border: none;
+            border-radius: var(--radius);
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-top: 1rem;
+        }
+
+        .register-btn:hover {
+            background: #e88a2a;
+        }
+
+        .switch-form {
+            margin-top: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .switch-form a {
+            color: var(--primary);
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .switch-form a:hover {
+            text-decoration: underline;
+        }
+
+        .error-message {
+            color: #f45656;
+            margin-top: 1rem;
+            display: none;
+        }
+
+        /* Header Styles */
+        header {
+            background: var(--primary);
+            color: white;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .admin-nav {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .admin-nav a {
+            color: white;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius);
+            transition: background 0.2s;
+        }
+
+        .admin-nav a:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .admin-nav a.active {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        /* Main Content */
+        .container {
+            display: flex;
+            min-height: calc(100vh - 60px);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 250px;
+            background: white;
+            padding: 1.5rem;
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .sidebar-menu {
+            list-style: none;
+        }
+
+        .sidebar-menu li {
+            margin-bottom: 0.5rem;
+        }
+
+        .sidebar-menu a {
+            display: block;
+            padding: 0.8rem 1rem;
+            color: var(--text);
+            text-decoration: none;
+            border-radius: var(--radius);
+            transition: all 0.2s;
+        }
+
+        .sidebar-menu a:hover {
+            background: rgba(244, 86, 86, 0.1);
+            color: var(--primary);
+        }
+
+        .sidebar-menu a.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .sidebar-menu i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+
+        /* Main Content Area */
+        .main-content {
+            flex: 1;
+            padding: 2rem;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .page-title {
+            font-size: 1.8rem;
+            color: var(--primary);
+        }
+
+        .btn {
+            padding: 0.7rem 1.2rem;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: var(--radius);
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .btn:hover {
+            background: #e04a4a;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: var(--secondary);
+        }
+
+        .btn-secondary:hover {
+            background: #e88a2a;
+        }
+
+        /* Dashboard Cards */
+        .dashboard-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 1.5rem;
+        }
+
+        .card-title {
+            font-size: 0.9rem;
+            color: var(--light-text);
+            margin-bottom: 0.5rem;
+        }
+
+        .card-value {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .card-info {
+            font-size: 0.9rem;
+            color: var(--light-text);
+        }
+
+        /* Tables */
+        .table-container {
+            background: white;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        th {
+            background: #f9f9f9;
+            font-weight: 500;
+            color: var(--light-text);
+        }
+
+        tr:hover {
+            background: #f9f9f9;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 0.3rem 0.6rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .status.pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status.completed {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status.cancelled {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .action-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            margin-right: 0.5rem;
+            color: var(--light-text);
+            transition: color 0.2s;
+        }
+
+        .action-btn:hover {
+            color: var(--primary);
+        }
+
+        /* Forms */
+        .form-container {
+            background: white;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 2rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.8rem;
+            border: 1px solid #ddd;
+            border-radius: var(--radius);
+            font-size: 1rem;
+        }
+
+        .form-group textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: var(--radius);
+            width: 90%;
+            max-width: 500px;
+            padding: 2rem;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-title {
+            font-size: 1.3rem;
+            color: var(--primary);
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--light-text);
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+            }
+
+            .dashboard-cards {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .dashboard-cards {
+                grid-template-columns: 1fr;
+            }
+
+            .page-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+        }
+
+        /* Tambahan untuk pesan data tidak ditemukan */
+        .no-data-message {
+            text-align: center;
+            padding: 2rem;
+            color: var(--light-text);
+            font-style: italic;
+            background: #f9f9f9;
+            border-radius: var(--radius);
+            margin: 1rem 0;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Login Page -->
+    <div id="login-page" class="login-container">
+        <div class="login-form">
+            <h1>Login Restoran</h1>
+
+            <div class="login-tabs">
+                <div class="login-tab active" onclick="switchLoginTab('user')">User</div>
+                <div class="login-tab" onclick="switchLoginTab('admin')">Admin</div>
+            </div>
+
+            <!-- User Login Form -->
+            <div id="user-login-form">
+                <div class="form-group">
+                    <label for="user-username">Username</label>
+                    <input type="text" id="user-username" placeholder="Masukkan username">
+                </div>
+                <div class="form-group">
+                    <label for="user-password">Password</label>
+                    <div class="password-wrapper">
+                        <input type="password" id="user-password" placeholder="Masukkan password">
+                        <button class="toggle-password" onclick="togglePassword('user-password')">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                                viewBox="0 0 16 16">
+                                <path
+                                    d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z" />
+                                <path
+                                    d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <button class="login-btn" onclick="userLogin()">Login</button>
+                <div class="switch-form">
+                    Belum punya akun? <a onclick="showRegisterForm()">Daftar disini</a>
+                </div>
+                <div id="user-login-error" class="error-message">Username atau password salah!</div>
+            </div>
+
+            <!-- User Register Form -->
+            <div id="user-register-form" style="display: none;">
+                <div class="form-group">
+                    <label for="register-name">Nama Lengkap</label>
+                    <input type="text" id="register-name" placeholder="Masukkan nama lengkap">
+                </div>
+                <div class="form-group">
+                    <label for="register-username">Username</label>
+                    <input type="text" id="register-username" placeholder="Masukkan username">
+                </div>
+                <div class="form-group">
+                    <label for="register-email">Email</label>
+                    <input type="email" id="register-email" placeholder="Masukkan email">
+                </div>
+                <div class="form-group">
+                    <label for="register-password">Password</label>
+                    <div class="password-wrapper">
+                        <input type="password" id="register-password" placeholder="Masukkan password">
+                        <button class="toggle-password" onclick="togglePassword('register-password')">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                                viewBox="0 0 16 16">
+                                <path
+                                    d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z" />
+                                <path
+                                    d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="register-phone">Nomor Telepon</label>
+                    <input type="text" id="register-phone" placeholder="Masukkan nomor telepon">
+                </div>
+                <div class="form-group">
+                    <label for="register-address">Alamat</label>
+                    <textarea id="register-address" placeholder="Masukkan alamat"></textarea>
+                </div>
+                <button class="login-btn" onclick="registerUser()">Daftar</button>
+                <div class="switch-form">
+                    Sudah punya akun? <a onclick="showLoginForm()">Login disini</a>
+                </div>
+                <div id="register-error" class="error-message"></div>
+            </div>
+
+            <!-- Admin Login Form -->
+            <div id="admin-login-form" style="display: none;">
+                <div class="form-group">
+                    <label for="admin-username">Username Admin</label>
+                    <input type="text" id="admin-username" placeholder="Masukkan username admin">
+                </div>
+                <div class="form-group">
+                    <label for="admin-password">Password Admin</label>
+                    <div class="password-wrapper">
+                        <input type="password" id="admin-password" placeholder="Masukkan password admin">
+                        <button class="toggle-password" onclick="togglePassword('admin-password')">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                                viewBox="0 0 16 16">
+                                <path
+                                    d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z" />
+                                <path
+                                    d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <button class="login-btn" onclick="adminLogin()">Login Admin</button>
+                <div id="admin-login-error" class="error-message">Username atau password admin salah!</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Panel -->
+    <div id="admin-panel" style="display: none;">
+        <header>
+            <div class="logo">Admin Restoran</div>
+            <nav class="admin-nav">
+                <a href="#" class="active">Admin</a>
+                <a href="indexxx - Copy.html">Kembali ke Menu</a>
+                <a href="#" onclick="logout()">Logout</a>
+            </nav>
+        </header>
+
+        <div class="container">
+            <aside class="sidebar">
+                <ul class="sidebar-menu">
+                    <li><a href="#dashboard"><i>📊</i> Dashboard</a></li>
+                    <li><a href="#orders"><i>📝</i> Pesanan</a></li>
+                    <li><a href="#menu" class="active"><i>🍽️</i> Manajemen Menu</a></li>
+                    <li><a href="#tables"><i>🪑</i> Manajemen Meja</a></li>
+                    <li><a href="#reports"><i>📈</i> Laporan</a></li>
+                </ul>
+            </aside>
+
+            <main class="main-content">
+                <!-- Dashboard Page -->
+                <div id="dashboard-page" style="display: none;">
+                    <div class="page-header">
+                        <h1 class="page-title">Dashboard</h1>
+                        <div class="page-actions">
+                            <button class="btn" onclick="showAddMenuModal()">Tambah Menu Baru</button>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-cards">
+                        <div class="card">
+                            <div class="card-title">Pesanan Hari Ini</div>
+                            <div class="card-value" id="today-orders">0</div>
+                            <div class="card-info" id="orders-change">Loading...</div>
+                        </div>
+                        <div class="card">
+                            <div class="card-title">Pendapatan Hari Ini</div>
+                            <div class="card-value" id="today-revenue">Rp0</div>
+                            <div class="card-info" id="revenue-change">Loading...</div>
+                        </div>
+                        <div class="card">
+                            <div class="card-title">Menu Terlaris</div>
+                            <div class="card-value" id="best-seller">Loading...</div>
+                            <div class="card-info" id="best-seller-count">Loading...</div>
+                        </div>
+                        <div class="card">
+                            <div class="card-title">Meja Tersedia</div>
+                            <div class="card-value" id="available-tables">Loading...</div>
+                            <div class="card-info" id="occupied-tables">Loading...</div>
+                        </div>
+                    </div>
+
+                    <h2 style="margin-bottom: 1rem;">Pesanan Terbaru</h2>
+                    <div class="table-container">
+                        <table id="recent-orders-table">
+                            <thead>
+                                <tr>
+                                    <th>No. Pesanan</th>
+                                    <th>Nama</th>
+                                    <th>Meja</th>
+                                    <th>Total</th>
+                                    <th>Status</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Pesanan akan diisi oleh JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Orders Page -->
+                <div id="orders-page" style="display: none;">
+                    <div class="page-header">
+                        <h1 class="page-title">Manajemen Pesanan</h1>
+                    </div>
+
+                    <div class="table-container">
+                        <table id="all-orders-table">
+                            <thead>
+                                <tr>
+                                    <th>No. Pesanan</th>
+                                    <th>Tanggal</th>
+                                    <th>Nama</th>
+                                    <th>Meja</th>
+                                    <th>Total</th>
+                                    <th>Status</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Pesanan akan diisi oleh JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Menu Management Page -->
+                <div id="menu-page">
+                    <div class="page-header">
+                        <h1 class="page-title">Manajemen Menu</h1>
+                        <div class="page-actions">
+                            <button class="btn" onclick="showAddMenuModal()">Tambah Menu Baru</button>
+                        </div>
+                    </div>
+
+                    <div class="table-container">
+                        <table id="menu-table">
+                            <thead>
+                                <tr>
+                                    <th>Gambar</th>
+                                    <th>Nama Menu</th>
+                                    <th>Kategori</th>
+                                    <th>Harga</th>
+                                    <th>Status</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Menu akan diisi oleh JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Tables Management Page -->
+                <div id="tables-page" style="display: none;">
+                    <div class="page-header">
+                        <h1 class="page-title">Manajemen Meja</h1>
+                        <div class="page-actions">
+                            <button class="btn" onclick="showAddTableModal()">Tambah Meja</button>
+                        </div>
+                    </div>
+
+                    <div class="table-container">
+                        <table id="tables-table">
+                            <thead>
+                                <tr>
+                                    <th>No. Meja</th>
+                                    <th>Status</th>
+                                    <th>Kapasitas</th>
+                                    <th>Pesanan Aktif</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Meja akan diisi oleh JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Reports Page -->
+                <div id="reports-page" style="display: none;">
+                    <div class="page-header">
+                        <h1 class="page-title">Laporan</h1>
+                        <div class="page-actions">
+                            <button class="btn" onclick="generateDailyReport()">Laporan Harian</button>
+                            <button class="btn" onclick="generateMonthlyReport()">Laporan Bulanan</button>
+                        </div>
+                    </div>
+
+                    <div id="report-container">
+                        <div class="card" style="margin-bottom: 2rem;">
+                            <div class="card-title">Pilih Periode Laporan</div>
+                            <div class="form-group">
+                                <label for="report-start-date">Dari Tanggal</label>
+                                <input type="date" id="report-start-date">
+                            </div>
+                            <div class="form-group">
+                                <label for="report-end-date">Sampai Tanggal</label>
+                                <input type="date" id="report-end-date">
+                            </div>
+                            <button class="btn" onclick="generateCustomReport()">Buat Laporan</button>
+                        </div>
+
+                        <div id="report-results">
+                            <!-- Hasil laporan akan ditampilkan di sini -->
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- User Panel -->
+    <div id="user-panel" style="display: none;">
+        <header>
+            <div class="logo">Restoran</div>
+            <nav class="admin-nav">
+                <a href="#" class="active">User</a>
+                <a href="indexxx - Copy.html">Kembali ke Menu</a>
+                <a href="#" onclick="logout()">Logout</a>
+            </nav>
+        </header>
+
+        <div class="container">
+            <aside class="sidebar">
+                <ul class="sidebar-menu">
+                    <li><a href="#user-orders"><i>📝</i> Pesanan Saya</a></li>
+                    <li><a href="#user-profile"><i>👤</i> Profil</a></li>
+                </ul>
+            </aside>
+
+            <main class="main-content">
+                <!-- User Orders Page -->
+                <div id="user-orders-page" style="display: none;">
+                    <div class="page-header">
+                        <h1 class="page-title">Pesanan Saya</h1>
+                    </div>
+
+                    <div class="table-container">
+                        <table id="user-all-orders-table">
+                            <thead>
+                                <tr>
+                                    <th>No. Pesanan</th>
+                                    <th>Tanggal</th>
+                                    <th>Total</th>
+                                    <th>Status</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Pesanan user akan diisi oleh JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- User Profile Page -->
+                <div id="user-profile-page" style="display: none;">
+                    <div class="page-header">
+                        <h1 class="page-title">Profil Saya</h1>
+                    </div>
+
+                    <div class="form-container">
+                        <div class="form-group">
+                            <label for="user-profile-name">Nama Lengkap</label>
+                            <input type="text" id="user-profile-name" placeholder="Masukkan nama lengkap">
+                        </div>
+                        <div class="form-group">
+                            <label for="user-profile-email">Email</label>
+                            <input type="email" id="user-profile-email" placeholder="Masukkan email">
+                        </div>
+                        <div class="form-group">
+                            <label for="user-profile-phone">Telepon</label>
+                            <input type="text" id="user-profile-phone" placeholder="Masukkan nomor telepon">
+                        </div>
+                        <div class="form-group">
+                            <label for="user-profile-address">Alamat</label>
+                            <textarea id="user-profile-address" placeholder="Masukkan alamat"></textarea>
+                        </div>
+                        <div class="form-actions">
+                            <button class="btn" onclick="saveUserProfile()">Simpan Profil</button>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Add Menu Modal -->
+    <div id="add-menu-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Tambah Menu Baru</h3>
+                <button class="close-modal" onclick="closeModal('add-menu-modal')">×</button>
+            </div>
+            <div class="form-container">
+                <div class="form-group">
+                    <label for="menu-name">Nama Menu</label>
+                    <input type="text" id="menu-name" placeholder="Masukkan nama menu">
+                </div>
+                <div class="form-group">
+                    <label for="menu-category">Kategori</label>
+                    <select id="menu-category">
+                        <option value="food">Makanan</option>
+                        <option value="drink">Minuman</option>
+                        <option value="dessert">Dessert</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="menu-price">Harga</label>
+                    <input type="number" id="menu-price" placeholder="Masukkan harga">
+                </div>
+                <div class="form-group">
+                    <label for="menu-description">Deskripsi</label>
+                    <textarea id="menu-description" placeholder="Masukkan deskripsi menu"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="menu-image">Gambar Menu (URL)</label>
+                    <input type="text" id="menu-image" placeholder="Masukkan URL gambar">
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="menu-available" checked> Tersedia
+                    </label>
+                </div>
+                <div class="form-actions">
+                    <button class="btn btn-cancel" onclick="closeModal('add-menu-modal')">Batal</button>
+                    <button class="btn" onclick="saveMenuItem()">Simpan Menu</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Menu Modal -->
+    <div id="edit-menu-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Edit Menu</h3>
+                <button class="close-modal" onclick="closeModal('edit-menu-modal')">×</button>
+            </div>
+            <div class="form-container">
+                <input type="hidden" id="edit-menu-id">
+                <div class="form-group">
+                    <label for="edit-menu-name">Nama Menu</label>
+                    <input type="text" id="edit-menu-name" placeholder="Masukkan nama menu">
+                </div>
+                <div class="form-group">
+                    <label for="edit-menu-category">Kategori</label>
+                    <select id="edit-menu-category">
+                        <option value="food">Makanan</option>
+                        <option value="drink">Minuman</option>
+                        <option value="dessert">Dessert</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="edit-menu-price">Harga</label>
+                    <input type="number" id="edit-menu-price" placeholder="Masukkan harga">
+                </div>
+                <div class="form-group">
+                    <label for="edit-menu-description">Deskripsi</label>
+                    <textarea id="edit-menu-description" placeholder="Masukkan deskripsi menu"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="edit-menu-image">Gambar Menu (URL)</label>
+                    <input type="text" id="edit-menu-image" placeholder="Masukkan URL gambar">
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="edit-menu-available"> Tersedia
+                    </label>
+                </div>
+                <div class="form-actions">
+                    <button class="btn btn-cancel" onclick="closeModal('edit-menu-modal')">Batal</button>
+                    <button class="btn" onclick="updateMenuItem()">Update Menu</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Order Detail Modal -->
+    <div id="order-detail-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Detail Pesanan <span id="detail-order-id"></span></h3>
+                <button class="close-modal" onclick="closeModal('order-detail-modal')">×</button>
+            </div>
+            <div style="padding: 1.5rem;">
+                <div style="margin-bottom: 1.5rem;">
+                    <p><strong>Nama Pelanggan:</strong> <span id="detail-customer-name"></span></p>
+                    <p><strong>No. Meja:</strong> <span id="detail-table-number"></span></p>
+                    <p><strong>Tanggal:</strong> <span id="detail-order-date"></span></p>
+                    <p><strong>Status:</strong> <span id="detail-order-status"></span></p>
+                    <p><strong>Metode Pembayaran:</strong> <span id="detail-payment-method"></span></p>
+                </div>
+
+                <h4 style="margin-bottom: 1rem;">Item Pesanan</h4>
+                <div id="order-items-container" style="margin-bottom: 1.5rem;">
+                    <!-- Item pesanan akan diisi di sini -->
+                </div>
+
+                <div style="border-top: 1px solid #eee; padding-top: 1rem;">
+                    <p style="text-align: right; font-weight: bold;">Total: <span id="detail-order-total"></span></p>
+                </div>
+
+                <div class="modal-footer">
+                    <button class="btn btn-cancel" onclick="closeModal('order-detail-modal')">Tutup</button>
+                    <button class="btn" id="complete-order-btn" style="display: none;"
+                        onclick="completeOrder()">Selesaikan Pesanan</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Table Modal -->
+    <div id="add-table-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Tambah Meja Baru</h3>
+                <button class="close-modal" onclick="closeModal('add-table-modal')">×</button>
+            </div>
+            <div class="form-container">
+                <div class="form-group">
+                    <label for="table-number">Nomor Meja</label>
+                    <input type="number" id="table-number" placeholder="Masukkan nomor meja">
+                </div>
+                <div class="form-group">
+                    <label for="table-capacity">Kapasitas</label>
+                    <input type="number" id="table-capacity" placeholder="Masukkan kapasitas meja">
+                </div>
+                <div class="form-actions">
+                    <button class="btn btn-cancel" onclick="closeModal('add-table-modal')">Batal</button>
+                    <button class="btn" onclick="saveTable()">Simpan Meja</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Data login (dalam aplikasi nyata, ini harus disimpan di server dengan hash)
+        const ADMIN_CREDENTIALS = {
+            username: "admin",
+            password: "password123" // Dalam produksi, gunakan password yang lebih kuat
+        };
+
+        let USER_CREDENTIALS = [
+            { username: "user1", password: "user123", name: "Pelanggan 1", email: "user1@example.com", phone: "081234567890", address: "Jl. Contoh No. 1" },
+            { username: "user2", password: "user123", name: "Pelanggan 2", email: "user2@example.com", phone: "082345678901", address: "Jl. Contoh No. 2" }
+        ];
+
+        // Variabel global
+        let currentEditingId = null;
+        let currentViewingOrderId = null;
+        let currentUser = null;
+
+        // Fungsi toggle password visibility
+        function togglePassword(inputId) {
+            const input = document.getElementById(inputId);
+            const toggle = input.nextElementSibling.querySelector('svg');
+
+            if (input.type === "password") {
+                input.type = "text";
+                toggle.innerHTML = `<path d="M13.359 11.238C15.06 9.72 16 8 16 8s-3-5.5-8-5.5a7.028 7.028 0 0 0-2.79.588l.77.771A5.944 5.944 0 0 1 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.134 13.134 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755-.165.165-.337.328-.517.486l.708.709z"/>
+                                    <path d="M11.297 9.176a3.5 3.5 0 0 0-4.474-4.474l.823.823a2.5 2.5 0 0 1 2.829 2.829l.822.822zm-2.943 1.299.822.822a3.5 3.5 0 0 1-4.474-4.474l.823.823a2.5 2.5 0 0 0 2.829 2.829z"/>
+                                    <path d="M3.35 5.47c-.18.16-.353.322-.518.487A13.134 13.134 0 0 0 1.172 8l.195.288c.335.48.83 1.12 1.465 1.755C4.121 11.332 5.881 12.5 8 12.5c.716 0 1.39-.133 2.02-.36l.77.772A7.029 7.029 0 0 1 8 13.5C3 13.5 0 8 0 8s.939-1.721 2.641-3.238l.708.709zm10.296 8.884-12-12 .708-.708 12 12-.708.708z"/>`;
+            } else {
+                input.type = "password";
+                toggle.innerHTML = `<path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z"/>
+                                    <path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"/>`;
+            }
+        }
+
+        // Fungsi untuk beralih antara tab login user dan admin
+        function switchLoginTab(tab) {
+            document.querySelectorAll('.login-tab').forEach(t => t.classList.remove('active'));
+            document.getElementById('user-login-form').style.display = 'none';
+            document.getElementById('user-register-form').style.display = 'none';
+            document.getElementById('admin-login-form').style.display = 'none';
+
+            if (tab === 'user') {
+                document.querySelector('.login-tab:nth-child(1)').classList.add('active');
+                document.getElementById('user-login-form').style.display = 'block';
+            } else {
+                document.querySelector('.login-tab:nth-child(2)').classList.add('active');
+                document.getElementById('admin-login-form').style.display = 'block';
+            }
+        }
+
+        // Fungsi untuk menampilkan form register
+        function showRegisterForm() {
+            document.getElementById('user-login-form').style.display = 'none';
+            document.getElementById('user-register-form').style.display = 'block';
+            document.getElementById('register-error').style.display = 'none';
+        }
+
+        // Fungsi untuk menampilkan form login
+        function showLoginForm() {
+            document.getElementById('user-register-form').style.display = 'none';
+            document.getElementById('user-login-form').style.display = 'block';
+            document.getElementById('user-login-error').style.display = 'none';
+        }
+
+        // Cek status login
+        function checkLogin() {
+            return localStorage.getItem('adminLoggedIn') === 'true' || localStorage.getItem('userLoggedIn') === 'true';
+        }
+
+        // Fungsi register user
+        function registerUser() {
+            const name = document.getElementById('register-name').value.trim();
+            const username = document.getElementById('register-username').value.trim();
+            const email = document.getElementById('register-email').value.trim();
+            const password = document.getElementById('register-password').value;
+            const phone = document.getElementById('register-phone').value.trim();
+            const address = document.getElementById('register-address').value.trim();
+            const errorElement = document.getElementById('register-error');
+
+            // Validasi input
+            if (!name || !username || !email || !password || !phone || !address) {
+                errorElement.textContent = 'Semua field harus diisi!';
+                errorElement.style.display = 'block';
+                return;
+            }
+
+            // Validasi username unik
+            if (USER_CREDENTIALS.some(u => u.username === username)) {
+                errorElement.textContent = 'Username sudah digunakan!';
+                errorElement.style.display = 'block';
+                return;
+            }
+
+            // Validasi email unik
+            if (USER_CREDENTIALS.some(u => u.email === email)) {
+                errorElement.textContent = 'Email sudah digunakan!';
+                errorElement.style.display = 'block';
+                return;
+            }
+
+            // Tambahkan user baru
+            const newUser = {
+                username,
+                password,
+                name,
+                email,
+                phone,
+                address
+            };
+
+            USER_CREDENTIALS.push(newUser);
+
+            // Simpan ke localStorage (dalam aplikasi nyata, ini harus disimpan di server)
+            localStorage.setItem('restaurantUsers', JSON.stringify(USER_CREDENTIALS));
+
+            // Tampilkan pesan sukses dan kembali ke form login
+            alert('Pendaftaran berhasil! Silakan login dengan akun Anda.');
+            showLoginForm();
+
+            // Reset form
+            document.getElementById('register-name').value = '';
+            document.getElementById('register-username').value = '';
+            document.getElementById('register-email').value = '';
+            document.getElementById('register-password').value = '';
+            document.getElementById('register-phone').value = '';
+            document.getElementById('register-address').value = '';
+        }
+
+        // Fungsi login admin
+        function adminLogin() {
+            const username = document.getElementById('admin-username').value;
+            const password = document.getElementById('admin-password').value;
+            const errorElement = document.getElementById('admin-login-error');
+
+            if (username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password) {
+                // Login berhasil
+                localStorage.setItem('adminLoggedIn', 'true');
+                localStorage.removeItem('userLoggedIn');
+                document.getElementById('login-page').style.display = 'none';
+                document.getElementById('admin-panel').style.display = 'block';
+                document.getElementById('user-panel').style.display = 'none';
+
+                // Load data admin panel
+                initializeAdminPanel();
+            } else {
+                // Login gagal
+                errorElement.style.display = 'block';
+            }
+        }
+
+        // Fungsi login user
+        function userLogin() {
+            const username = document.getElementById('user-username').value;
+            const password = document.getElementById('user-password').value;
+            const errorElement = document.getElementById('user-login-error');
+
+            const user = USER_CREDENTIALS.find(u => u.username === username && u.password === password);
+
+            if (user) {
+                // Login berhasil
+                localStorage.setItem('userLoggedIn', 'true');
+                localStorage.removeItem('adminLoggedIn');
+                localStorage.setItem('currentUser', username);
+                currentUser = user;
+                document.getElementById('login-page').style.display = 'none';
+                document.getElementById('admin-panel').style.display = 'none';
+                document.getElementById('user-panel').style.display = 'block';
+
+                // Load data user panel
+                initializeUserPanel();
+            } else {
+                // Login gagal
+                errorElement.style.display = 'block';
+            }
+        }
+
+        // Fungsi logout
+        function logout() {
+            if (confirm('Apakah Anda yakin ingin logout?')) {
+                localStorage.removeItem('adminLoggedIn');
+                localStorage.removeItem('userLoggedIn');
+                localStorage.removeItem('currentUser');
+                currentUser = null;
+                window.location.reload();
+            }
+        }
+
+        // Inisialisasi admin panel setelah login
+        function initializeAdminPanel() {
+            // Set default menu items if not exists
+            if (!localStorage.getItem('restaurantMenu')) {
+                const defaultMenuItems = [
+                    {
+                        id: '1',
+                        name: 'Nasi Goreng Special',
+                        category: 'food',
+                        price: 20000,
+                        description: 'Digoreng dengan bumbu rempah, telur, dan ayam suwir.',
+                        image: 'https://tse3.mm.bing.net/th/id/OIP.ClVYslsBXxKx4jlcnDzwdAAAAA?rs=1&pid=ImgDetMain&o=7&rm=3',
+                        available: true
+                    },
+                    {
+                        id: '2',
+                        name: 'Ayam Geprek',
+                        category: 'food',
+                        price: 15000,
+                        description: 'Ayam krispi dan nasi hangat ditambah sambal yang pedas.',
+                        image: 'https://assets.pikiran-rakyat.com/crop/34x0:2161x1365/x/photo/2022/02/20/1241459943.jpg',
+                        available: true
+                    },
+                    {
+                        id: '3',
+                        name: 'Rice Bowl',
+                        category: 'food',
+                        price: 22000,
+                        description: 'Perpaduan nasi, telur, dan daging dalam satu mangkuk.',
+                        image: 'https://cdn-brilio-net.akamaized.net/news/2024/05/29/286143/2281927-1000xauto-11-resep-rice-bowl-enak.jpg',
+                        available: true
+                    },
+                    {
+                        id: '4',
+                        name: 'Es Teh Manis',
+                        category: 'drink',
+                        price: 5000,
+                        description: 'Teh melati dingin dengan gula tebu alami.',
+                        image: 'https://www.astronauts.id/blog/wp-content/uploads/2023/03/Beberapa-Resep-Es-Teh-Manis-Yang-Enggak-Ngebosenin-Untuk-Buka-Puasa-1024x683.jpg',
+                        available: true
+                    },
+                    {
+                        id: '5',
+                        name: 'Jus Alpukat',
+                        category: 'drink',
+                        price: 12000,
+                        description: 'Buah Alpukat yang segar dengan es batu.',
+                        image: 'https://cdn.yummy.co.id/content-images/images/20220307/WxbiRNNZCXBodI5OG5Jvf6lHs6XrYIpP-31363436363535383236d41d8cd98f00b204e9800998ecf8427e.jpg',
+                        available: true
+                    },
+                    {
+                        id: '6',
+                        name: 'Jus Mangga',
+                        category: 'drink',
+                        price: 15000,
+                        description: '100% mangga harum manis tanpa tambahan gula.',
+                        image: 'https://s.kaskus.id/images/2017/12/22/10047354_20171222113742.png',
+                        available: true
+                    },
+                    {
+                        id: '7',
+                        name: 'Es Krim Vanilla',
+                        category: 'dessert',
+                        price: 10000,
+                        description: 'Es krim lembut dengan aroma vanilla yang enak.',
+                        image: 'https://tse4.mm.bing.net/th/id/OIP.aUWwleENEOx37qj6WX8huQHaLN?w=768&h=1163&rs=1&pid=ImgDetMain&o=7&rm=3',
+                        available: true
+                    },
+                    {
+                        id: '8',
+                        name: 'Pisang Goreng Keju',
+                        category: 'dessert',
+                        price: 15000,
+                        description: 'Pisang raja balut tepung renyah, tabur keju parut.',
+                        image: 'https://tse3.mm.bing.net/th/id/OIP.9huTUXggBuyZwQT3yQFSIgHaE7?rs=1&pid=ImgDetMain&o=7&rm=3',
+                        available: true
+                    },
+                    {
+                        id: '9',
+                        name: 'Kolak Pisang Ubi',
+                        category: 'dessert',
+                        price: 20000,
+                        description: 'Kuah santan gula merah hangat, aroma pandan.',
+                        image: 'https://img-global.cpcdn.com/recipes/d66914757ea5acbb/680x482cq70/kolak-pisang-ubi-ungu-foto-resep-utama.jpg',
+                        available: true
+                    }
+                ];
+                localStorage.setItem('restaurantMenu', JSON.stringify(defaultMenuItems));
+            }
+
+            // Set default tables if not exists
+            if (!localStorage.getItem('restaurantTables')) {
+                const defaultTables = [
+                    { number: 1, capacity: 4, status: 'available' },
+                    { number: 2, capacity: 4, status: 'available' },
+                    { number: 3, capacity: 6, status: 'available' },
+                    { number: 4, capacity: 6, status: 'available' },
+                    { number: 5, capacity: 2, status: 'available' },
+                    { number: 6, capacity: 2, status: 'available' },
+                    { number: 7, capacity: 8, status: 'available' },
+                    { number: 8, capacity: 8, status: 'available' }
+                ];
+                localStorage.setItem('restaurantTables', JSON.stringify(defaultTables));
+            }
+
+            // Load user data from localStorage if exists
+            const storedUsers = localStorage.getItem('restaurantUsers');
+            if (storedUsers) {
+                USER_CREDENTIALS = JSON.parse(storedUsers);
+            }
+
+            // Load initial data
+            loadDashboardData();
+            loadOrders();
+            loadMenuItems();
+            loadTables();
+
+            // Set default dates for report
+            const today = new Date();
+            document.getElementById('report-start-date').valueAsDate = today;
+            document.getElementById('report-end-date').valueAsDate = today;
+
+            // Activate menu page by default
+            document.querySelector('.sidebar-menu a[href="#menu"]').click();
+        }
+
+        // Inisialisasi user panel setelah login
+        function initializeUserPanel() {
+            // Load user profile
+            document.getElementById('user-profile-name').value = currentUser.name;
+            document.getElementById('user-profile-email').value = currentUser.email;
+            document.getElementById('user-profile-phone').value = currentUser.phone;
+            document.getElementById('user-profile-address').value = currentUser.address;
+
+            // Load user orders
+            loadUserOrders();
+
+            // Activate orders page by default (bukan dashboard)
+            document.querySelector('.sidebar-menu a[href="#user-orders"]').click();
+        }
+
+        // Navigation admin
+        document.querySelectorAll('.sidebar-menu a').forEach(link => {
+            link.addEventListener('click', function (e) {
+                e.preventDefault();
+
+                // Update active state
+                document.querySelectorAll('.sidebar-menu a').forEach(item => {
+                    item.classList.remove('active');
+                });
+                this.classList.add('active');
+
+                // Hide all pages
+                document.querySelectorAll('main > div').forEach(page => {
+                    page.style.display = 'none';
+                });
+
+                // Show selected page
+                const pageId = this.getAttribute('href').substring(1) + '-page';
+                document.getElementById(pageId).style.display = 'block';
+
+                // Load data if needed
+                if (pageId === 'orders-page') {
+                    loadOrders();
+                } else if (pageId === 'menu-page') {
+                    loadMenuItems();
+                } else if (pageId === 'tables-page') {
+                    loadTables();
+                }
+            });
+        });
+
+        // Navigation user
+        document.querySelectorAll('#user-panel .sidebar-menu a').forEach(link => {
+            link.addEventListener('click', function (e) {
+                e.preventDefault();
+
+                // Update active state
+                document.querySelectorAll('#user-panel .sidebar-menu a').forEach(item => {
+                    item.classList.remove('active');
+                });
+                this.classList.add('active');
+
+                // Hide all pages
+                document.querySelectorAll('#user-panel main > div').forEach(page => {
+                    page.style.display = 'none';
+                });
+
+                // Show selected page
+                const pageId = this.getAttribute('href').substring(1) + '-page';
+                document.getElementById(pageId).style.display = 'block';
+
+                // Load data if needed
+                if (pageId === 'user-orders-page') {
+                    loadUserOrders();
+                }
+            });
+        });
+
+        // Modal functions
+        function showAddMenuModal() {
+            document.getElementById('add-menu-modal').style.display = 'flex';
+            // Reset form
+            document.getElementById('menu-name').value = '';
+            document.getElementById('menu-price').value = '';
+            document.getElementById('menu-description').value = '';
+            document.getElementById('menu-image').value = '';
+            document.getElementById('menu-available').checked = true;
+        }
+
+        function showEditMenuModal(menuItem) {
+            currentEditingId = menuItem.id || menuItem.name;
+            document.getElementById('edit-menu-modal').style.display = 'flex';
+
+            // Fill form with menu data
+            document.getElementById('edit-menu-name').value = menuItem.name;
+            document.getElementById('edit-menu-price').value = menuItem.price;
+            document.getElementById('edit-menu-description').value = menuItem.description;
+            document.getElementById('edit-menu-image').value = menuItem.image || '';
+            document.getElementById('edit-menu-available').checked = menuItem.available !== false;
+
+            // Set category
+            const categorySelect = document.getElementById('edit-menu-category');
+            for (let i = 0; i < categorySelect.options.length; i++) {
+                if (categorySelect.options[i].value === menuItem.category) {
+                    categorySelect.selectedIndex = i;
+                    break;
+                }
+            }
+        }
+
+        function showAddTableModal() {
+            document.getElementById('add-table-modal').style.display = 'flex';
+            // Reset form
+            document.getElementById('table-number').value = '';
+            document.getElementById('table-capacity').value = '';
+        }
+
+        function showOrderDetailModal(orderId) {
+            currentViewingOrderId = orderId;
+            const orders = JSON.parse(localStorage.getItem('restaurantOrders')) || [];
+            const order = orders.find(o => o.id === orderId);
+
+            if (!order) {
+                alert('Pesanan tidak ditemukan');
+                return;
+            }
+
+            // Fill order details
+            document.getElementById('detail-order-id').textContent = order.id;
+            document.getElementById('detail-customer-name').textContent = order.customerName;
+            document.getElementById('detail-table-number').textContent = order.tableNumber || 'Take Away';
+            document.getElementById('detail-order-date').textContent = new Date(order.timestamp).toLocaleString();
+            document.getElementById('detail-order-status').textContent = getStatusText(order.status);
+            document.getElementById('detail-payment-method').textContent = getPaymentMethodText(order.paymentMethod);
+            document.getElementById('detail-order-total').textContent = 'Rp' + order.total.toLocaleString('id-ID');
+
+            // Fill order items
+            const itemsContainer = document.getElementById('order-items-container');
+            itemsContainer.innerHTML = '';
+
+            order.items.forEach(item => {
+                const itemElement = document.createElement('div');
+                itemElement.style.display = 'flex';
+                itemElement.style.justifyContent = 'space-between';
+                itemElement.style.marginBottom = '0.5rem';
+                itemElement.innerHTML = `
+                    <span>${item.name} (${item.quantity}x)</span>
+                    <span>Rp${(item.price * item.quantity).toLocaleString('id-ID')}</span>
+                `;
+                itemsContainer.appendChild(itemElement);
+            });
+
+            // Show/hide complete button based on status
+            const completeBtn = document.getElementById('complete-order-btn');
+            completeBtn.style.display = order.status === 'pending' ? 'block' : 'none';
+
+            document.getElementById('order-detail-modal').style.display = 'flex';
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        function getStatusText(status) {
+            const statusTexts = {
+                'pending': 'Diproses',
+                'completed': 'Selesai',
+                'cancelled': 'Dibatalkan'
+            };
+            return statusTexts[status] || status;
+        }
+
+        function getPaymentMethodText(method) {
+            const methodTexts = {
+                'cash': 'Tunai',
+                'qris': 'QRIS',
+                'bank-transfer': 'Transfer Bank'
+            };
+            return methodTexts[method] || method;
+        }
+
+        // Data loading functions
+        function loadDashboardData() {
+            const orders = JSON.parse(localStorage.getItem('restaurantOrders')) || [];
+            const today = new Date().toISOString().split('T')[0];
+
+            // Today's orders
+            const todayOrders = orders.filter(order =>
+                order.timestamp.split('T')[0] === today && order.status !== 'cancelled'
+            );
+
+            document.getElementById('today-orders').textContent = todayOrders.length;
+
+            // Today's revenue
+            const todayRevenue = todayOrders.reduce((sum, order) => sum + order.total, 0);
+            document.getElementById('today-revenue').textContent = 'Rp' + todayRevenue.toLocaleString('id-ID');
+
+            // Best seller
+            const allItems = todayOrders.flatMap(order => order.items);
+            const itemCounts = {};
+
+            allItems.forEach(item => {
+                itemCounts[item.name] = (itemCounts[item.name] || 0) + item.quantity;
+            });
+
+            let bestSeller = 'Tidak ada data';
+            let bestSellerCount = '';
+
+            if (Object.keys(itemCounts).length > 0) {
+                const sorted = Object.entries(itemCounts).sort((a, b) => b[1] - a[1]);
+                bestSeller = sorted[0][0];
+                bestSellerCount = `${sorted[0][1]} pesanan`;
+            }
+
+            document.getElementById('best-seller').textContent = bestSeller;
+            document.getElementById('best-seller-count').textContent = bestSellerCount;
+
+            // Tables status
+            const tables = JSON.parse(localStorage.getItem('restaurantTables')) || [];
+            const occupiedTables = tables.filter(table => table.status === 'occupied').length;
+            document.getElementById('available-tables').textContent = `${tables.length - occupiedTables}/${tables.length}`;
+            document.getElementById('occupied-tables').textContent = `${occupiedTables} meja terisi`;
+
+            // Recent orders
+            const recentOrdersTable = document.querySelector('#recent-orders-table tbody');
+            recentOrdersTable.innerHTML = '';
+
+            const recentOrders = orders.slice(-5).reverse();
+            recentOrders.forEach(order => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>#${order.id}</td>
+                    <td>${order.customerName}</td>
+                    <td>${order.tableNumber || 'Take Away'}</td>
+                    <td>Rp${order.total.toLocaleString('id-ID')}</td>
+                    <td><span class="status ${order.status}">${getStatusText(order.status)}</span></td>
+                    <td>
+                        <button class="action-btn" title="Lihat detail" onclick="showOrderDetailModal('${order.id}')">👁️</button>
+                        ${order.status === 'pending' ?
+                        '<button class="action-btn" title="Selesaikan" onclick="completeOrderFromTable(\'' + order.id + '\')">✓</button>' :
+                        ''}
+                    </td>
+                `;
+                recentOrdersTable.appendChild(row);
+            });
+        }
+
+        function loadOrders() {
+            const orders = JSON.parse(localStorage.getItem('restaurantOrders')) || [];
+            const ordersTable = document.querySelector('#all-orders-table tbody');
+            ordersTable.innerHTML = '';
+
+            // Sort by date (newest first)
+            const sortedOrders = [...orders].sort((a, b) =>
+                new Date(b.timestamp) - new Date(a.timestamp)
+            );
+
+            sortedOrders.forEach(order => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>#${order.id}</td>
+                    <td>${new Date(order.timestamp).toLocaleDateString()}</td>
+                    <td>${order.customerName}</td>
+                    <td>${order.tableNumber || 'Take Away'}</td>
+                    <td>Rp${order.total.toLocaleString('id-ID')}</td>
+                    <td><span class="status ${order.status}">${getStatusText(order.status)}</span></td>
+                    <td>
+                        <button class="action-btn" title="Lihat detail" onclick="showOrderDetailModal('${order.id}')">👁️</button>
+                        ${order.status === 'pending' ?
+                        '<button class="action-btn" title="Selesaikan" onclick="completeOrderFromTable(\'' + order.id + '\')">✓</button>' :
+                        ''}
+                    </td>
+                `;
+                ordersTable.appendChild(row);
+            });
+        }
+
+        function loadUserOrders() {
+            if (!currentUser) return;
+
+            const orders = JSON.parse(localStorage.getItem('restaurantOrders')) || [];
+            const userOrders = orders.filter(order => order.customerName === currentUser.name);
+
+            // Update dashboard stats
+            document.getElementById('user-active-orders').textContent =
+                userOrders.filter(o => o.status === 'pending').length;
+            document.getElementById('user-total-orders').textContent = userOrders.length;
+
+            // Recent orders table
+            const recentOrdersTable = document.querySelector('#user-recent-orders-table tbody');
+            recentOrdersTable.innerHTML = '';
+
+            const recentOrders = userOrders.slice(-5).reverse();
+            recentOrders.forEach(order => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>#${order.id}</td>
+                    <td>${new Date(order.timestamp).toLocaleDateString()}</td>
+                    <td>Rp${order.total.toLocaleString('id-ID')}</td>
+                    <td><span class="status ${order.status}">${getStatusText(order.status)}</span></td>
+                    <td>
+                        <button class="action-btn" title="Lihat detail" onclick="showOrderDetailModal('${order.id}')">👁️</button>
+                    </td>
+                `;
+                recentOrdersTable.appendChild(row);
+            });
+
+            // All orders table
+            const allOrdersTable = document.querySelector('#user-all-orders-table tbody');
+            allOrdersTable.innerHTML = '';
+
+            const sortedOrders = [...userOrders].sort((a, b) =>
+                new Date(b.timestamp) - new Date(a.timestamp)
+            );
+
+            sortedOrders.forEach(order => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>#${order.id}</td>
+                    <td>${new Date(order.timestamp).toLocaleDateString()}</td>
+                    <td>Rp${order.total.toLocaleString('id-ID')}</td>
+                    <td><span class="status ${order.status}">${getStatusText(order.status)}</span></td>
+                    <td>
+                        <button class="action-btn" title="Lihat detail" onclick="showOrderDetailModal('${order.id}')">👁️</button>
+                    </td>
+                `;
+                allOrdersTable.appendChild(row);
+            });
+        }
+
+        function loadMenuItems() {
+            const menuItems = JSON.parse(localStorage.getItem('restaurantMenu')) || [];
+            const menuTable = document.querySelector('#menu-table tbody');
+            menuTable.innerHTML = '';
+
+            menuItems.forEach(item => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><img src="${item.image || 'https://via.placeholder.com/50?text=No+Image'}" width="50" height="50" style="object-fit: cover; border-radius: 4px;"></td>
+                    <td>${item.name}</td>
+                    <td>${getCategoryText(item.category)}</td>
+                    <td>Rp${item.price.toLocaleString('id-ID')}</td>
+                    <td>${item.available !== false ? 'Tersedia' : 'Tidak Tersedia'}</td>
+                    <td>
+                        <button class="action-btn" title="Edit" onclick="showEditMenuModal(${JSON.stringify(item).replace(/"/g, '&quot;')})">✏️</button>
+                        <button class="action-btn" title="Hapus" onclick="deleteMenuItem('${item.id || item.name}')">🗑️</button>
+                    </td>
+                `;
+                menuTable.appendChild(row);
+            });
+        }
+
+        function loadTables() {
+            let tables = JSON.parse(localStorage.getItem('restaurantTables')) || [];
+
+            // Update table status based on active orders
+            const orders = JSON.parse(localStorage.getItem('restaurantOrders')) || [];
+            const activeOrders = orders.filter(order =>
+                order.status === 'pending' && order.tableNumber
+            );
+
+            tables = tables.map(table => {
+                const isOccupied = activeOrders.some(order =>
+                    order.tableNumber === `Meja ${table.number}`
+                );
+                return {
+                    ...table,
+                    status: isOccupied ? 'occupied' : 'available'
+                };
+            });
+
+            // Save updated tables
+            localStorage.setItem('restaurantTables', JSON.stringify(tables));
+
+            // Display tables
+            const tablesTable = document.querySelector('#tables-table tbody');
+            tablesTable.innerHTML = '';
+
+            tables.forEach(table => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>Meja ${table.number}</td>
+                    <td><span class="status ${table.status}">${table.status === 'available' ? 'Tersedia' : 'Terisi'
+                    }</span></td>
+                    <td>${table.capacity} orang</td>
+                    <td>${table.status === 'occupied' ?
+                        activeOrders.find(o => o.tableNumber === `Meja ${table.number}`).id :
+                        '-'
+                    }</td>
+                    <td>
+                        <button class="action-btn" title="Edit" onclick="editTable(${table.number})">✏️</button>
+                        <button class="action-btn" title="Hapus" onclick="deleteTable(${table.number})">🗑️</button>
+                    </td>
+                `;
+                tablesTable.appendChild(row);
+            });
+        }
+
+        function getCategoryText(category) {
+            const categoryTexts = {
+                'food': 'Makanan',
+                'drink': 'Minuman',
+                'dessert': 'Dessert'
+            };
+            return categoryTexts[category] || category;
+        }
+
+        // CRUD functions
+        function saveMenuItem() {
+            const menuItem = {
+                id: Date.now().toString(),
+                name: document.getElementById('menu-name').value.trim(),
+                category: document.getElementById('menu-category').value,
+                price: parseInt(document.getElementById('menu-price').value),
+                description: document.getElementById('menu-description').value.trim(),
+                image: document.getElementById('menu-image').value.trim(),
+                available: document.getElementById('menu-available').checked
+            };
+
+            if (!menuItem.name || isNaN(menuItem.price)) {
+                alert('Silakan isi nama dan harga menu dengan benar');
+                return;
+            }
+
+            let menuItems = JSON.parse(localStorage.getItem('restaurantMenu')) || [];
+
+            // Check if item with same name already exists
+            if (menuItems.some(item => item.name.toLowerCase() === menuItem.name.toLowerCase())) {
+                alert('Menu dengan nama tersebut sudah ada');
+                return;
+            }
+
+            menuItems.push(menuItem);
+            localStorage.setItem('restaurantMenu', JSON.stringify(menuItems));
+
+            closeModal('add-menu-modal');
+            loadMenuItems();
+            alert('Menu berhasil ditambahkan');
+        }
+
+        function updateMenuItem() {
+            const menuItem = {
+                id: currentEditingId,
+                name: document.getElementById('edit-menu-name').value.trim(),
+                category: document.getElementById('edit-menu-category').value,
+                price: parseInt(document.getElementById('edit-menu-price').value),
+                description: document.getElementById('edit-menu-description').value.trim(),
+                image: document.getElementById('edit-menu-image').value.trim(),
+                available: document.getElementById('edit-menu-available').checked
+            };
+
+            if (!menuItem.name || isNaN(menuItem.price)) {
+                alert('Silakan isi nama dan harga menu dengan benar');
+                return;
+            }
+
+            let menuItems = JSON.parse(localStorage.getItem('restaurantMenu')) || [];
+
+            // Update the item
+            menuItems = menuItems.map(item =>
+                item.id === currentEditingId || item.name === currentEditingId ? menuItem : item
+            );
+
+            localStorage.setItem('restaurantMenu', JSON.stringify(menuItems));
+
+            closeModal('edit-menu-modal');
+            loadMenuItems();
+            alert('Menu berhasil diperbarui');
+        }
+
+        function deleteMenuItem(itemId) {
+            if (!confirm('Apakah Anda yakin ingin menghapus menu ini?')) {
+                return;
+            }
+
+            let menuItems = JSON.parse(localStorage.getItem('restaurantMenu')) || [];
+            menuItems = menuItems.filter(item =>
+                item.id !== itemId && item.name !== itemId
+            );
+
+            localStorage.setItem('restaurantMenu', JSON.stringify(menuItems));
+            loadMenuItems();
+            alert('Menu berhasil dihapus');
+        }
+
+        function saveTable() {
+            const table = {
+                number: parseInt(document.getElementById('table-number').value),
+                capacity: parseInt(document.getElementById('table-capacity').value),
+                status: 'available'
+            };
+
+            if (isNaN(table.number) || isNaN(table.capacity)) {
+                alert('Silakan isi nomor dan kapasitas meja dengan benar');
+                return;
+            }
+
+            let tables = JSON.parse(localStorage.getItem('restaurantTables')) || [];
+
+            // Check if table with same number already exists
+            if (tables.some(t => t.number === table.number)) {
+                alert('Meja dengan nomor tersebut sudah ada');
+                return;
+            }
+
+            tables.push(table);
+            localStorage.setItem('restaurantTables', JSON.stringify(tables));
+
+            closeModal('add-table-modal');
+            loadTables();
+            alert('Meja berhasil ditambahkan');
+        }
+
+        function editTable(tableNumber) {
+            // Implement edit table functionality
+            alert('Fitur edit meja akan diimplementasikan di sini');
+        }
+
+        function deleteTable(tableNumber) {
+            if (!confirm('Apakah Anda yakin ingin menghapus meja ini?')) {
+                return;
+            }
+
+            let tables = JSON.parse(localStorage.getItem('restaurantTables')) || [];
+            tables = tables.filter(table => table.number !== tableNumber);
+
+            localStorage.setItem('restaurantTables', JSON.stringify(tables));
+            loadTables();
+            alert('Meja berhasil dihapus');
+        }
+
+        function completeOrder() {
+            const orders = JSON.parse(localStorage.getItem('restaurantOrders')) || [];
+            const orderIndex = orders.findIndex(o => o.id === currentViewingOrderId);
+
+            if (orderIndex !== -1) {
+                orders[orderIndex].status = 'completed';
+                localStorage.setItem('restaurantOrders', JSON.stringify(orders));
+
+                closeModal('order-detail-modal');
+                loadDashboardData();
+                loadOrders();
+                loadTables();
+                alert('Pesanan telah diselesaikan');
+            }
+        }
+
+        function completeOrderFromTable(orderId) {
+            currentViewingOrderId = orderId;
+            completeOrder();
+        }
+
+        function saveUserProfile() {
+            if (!currentUser) return;
+
+            currentUser.name = document.getElementById('user-profile-name').value.trim();
+            currentUser.email = document.getElementById('user-profile-email').value.trim();
+            currentUser.phone = document.getElementById('user-profile-phone').value.trim();
+            currentUser.address = document.getElementById('user-profile-address').value.trim();
+
+            // Update user credentials
+            const userIndex = USER_CREDENTIALS.findIndex(u => u.username === currentUser.username);
+            if (userIndex !== -1) {
+                USER_CREDENTIALS[userIndex] = currentUser;
+                localStorage.setItem('restaurantUsers', JSON.stringify(USER_CREDENTIALS));
+            }
+
+            alert('Profil berhasil diperbarui');
+        }
+
+        // Report functions
+        function generateDailyReport() {
+            const today = new Date().toISOString().split('T')[0];
+            generateCustomReport(today, today);
+        }
+
+        function generateMonthlyReport() {
+            const today = new Date();
+            const firstDay = new Date(today.getFullYear(), today.getMonth(), 1)
+                .toISOString().split('T')[0];
+            const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0)
+                .toISOString().split('T')[0];
+
+            generateCustomReport(firstDay, lastDay);
+        }
+
+        function generateCustomReport() {
+            const startDate = document.getElementById('report-start-date').value;
+            const endDate = document.getElementById('report-end-date').value;
+
+            if (!startDate || !endDate) {
+                alert('Silakan pilih tanggal mulai dan tanggal akhir');
+                return;
+            }
+
+            const orders = JSON.parse(localStorage.getItem('restaurantOrders')) || [];
+            const filteredOrders = orders.filter(order => {
+                const orderDate = order.timestamp.split('T')[0];
+                return orderDate >= startDate && orderDate <= endDate && order.status !== 'cancelled';
+            });
+
+            // Calculate report data
+            const totalOrders = filteredOrders.length;
+            const totalRevenue = filteredOrders.reduce((sum, order) => sum + order.total, 0);
+
+            // Display report
+            const reportResults = document.getElementById('report-results');
+
+            if (filteredOrders.length === 0) {
+                // Jika tidak ada data
+                const startDateFormatted = new Date(startDate).toLocaleDateString();
+                const endDateFormatted = new Date(endDate).toLocaleDateString();
+
+                reportResults.innerHTML = `
+                    <div class="no-data-message">
+                        <h3>Data Tidak Ditemukan</h3>
+                        <p>Tidak ada data pemasukan dan pengeluaran untuk periode ${startDateFormatted} sampai ${endDateFormatted}</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // Item sales
+            const itemSales = {};
+            filteredOrders.forEach(order => {
+                order.items.forEach(item => {
+                    if (!itemSales[item.name]) {
+                        itemSales[item.name] = {
+                            quantity: 0,
+                            revenue: 0
+                        };
+                    }
+                    itemSales[item.name].quantity += item.quantity;
+                    itemSales[item.name].revenue += item.price * item.quantity;
+                });
+            });
+
+            // Payment methods
+            const paymentMethods = {};
+            filteredOrders.forEach(order => {
+                if (!paymentMethods[order.paymentMethod]) {
+                    paymentMethods[order.paymentMethod] = 0;
+                }
+                paymentMethods[order.paymentMethod]++;
+            });
+
+            // Display report
+            reportResults.innerHTML = `
+                <div class="card" style="margin-bottom: 1.5rem;">
+                    <h3 style="margin-bottom: 1rem;">Ringkasan Laporan</h3>
+                    <div class="table-container">
+                        <table style="width: 100%;">
+                            <tr>
+                                <td><strong>Periode:</strong></td>
+                                <td>${new Date(startDate).toLocaleDateString()} - ${new Date(endDate).toLocaleDateString()}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Total Pesanan:</strong></td>
+                                <td>${totalOrders}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Total Pendapatan:</strong></td>
+                                <td>Rp${totalRevenue.toLocaleString('id-ID')}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="card" style="margin-bottom: 1.5rem;">
+                    <h3 style="margin-bottom: 1rem;">Penjualan Menu</h3>
+                    <div class="table-container">
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr style="background-color: #f9f9f9;">
+                                    <th style="padding: 12px; text-align: left; border-bottom: 1px solid #ddd;">Menu</th>
+                                    <th style="padding: 12px; text-align: right; border-bottom: 1px solid #ddd;">Jumlah</th>
+                                    <th style="padding: 12px; text-align: right; border-bottom: 1px solid #ddd;">Pendapatan</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${Object.entries(itemSales).map(([name, data]) => `
+                                    <tr>
+                                        <td style="padding: 12px; border-bottom: 1px solid #ddd;">${name}</td>
+                                        <td style="padding: 12px; text-align: right; border-bottom: 1px solid #ddd;">${data.quantity}</td>
+                                        <td style="padding: 12px; text-align: right; border-bottom: 1px solid #ddd;">Rp${data.revenue.toLocaleString('id-ID')}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h3 style="margin-bottom: 1rem;">Metode Pembayaran</h3>
+                    <div class="table-container">
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr style="background-color: #f9f9f9;">
+                                    <th style="padding: 12px; text-align: left; border-bottom: 1px solid #ddd;">Metode</th>
+                                    <th style="padding: 12px; text-align: right; border-bottom: 1px solid #ddd;">Jumlah Pesanan</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${Object.entries(paymentMethods).map(([method, count]) => `
+                                    <tr>
+                                        <td style="padding: 12px; border-bottom: 1px solid #ddd;">${getPaymentMethodText(method)}</td>
+                                        <td style="padding: 12px; text-align: right; border-bottom: 1px solid #ddd;">${count}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Cek status login saat halaman dimuat
+        document.addEventListener('DOMContentLoaded', function () {
+            // Load user data from localStorage if exists
+            const storedUsers = localStorage.getItem('restaurantUsers');
+            if (storedUsers) {
+                USER_CREDENTIALS = JSON.parse(storedUsers);
+            }
+
+            if (localStorage.getItem('adminLoggedIn') === 'true') {
+                document.getElementById('login-page').style.display = 'none';
+                document.getElementById('admin-panel').style.display = 'block';
+                document.getElementById('user-panel').style.display = 'none';
+                initializeAdminPanel();
+            } else if (localStorage.getItem('userLoggedIn') === 'true') {
+                const username = localStorage.getItem('currentUser');
+                currentUser = USER_CREDENTIALS.find(u => u.username === username);
+
+                if (currentUser) {
+                    document.getElementById('login-page').style.display = 'none';
+                    document.getElementById('admin-panel').style.display = 'none';
+                    document.getElementById('user-panel').style.display = 'block';
+                    initializeUserPanel();
+                } else {
+                    // User not found, force logout
+                    localStorage.removeItem('userLoggedIn');
+                    localStorage.removeItem('currentUser');
+                    window.location.reload();
+                }
+            } else {
+                document.getElementById('login-page').style.display = 'flex';
+                document.getElementById('admin-panel').style.display = 'none';
+                document.getElementById('user-panel').style.display = 'none';
+            }
+        });
+    </script>
+</body>
+
+</html>
