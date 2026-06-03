@@ -35,10 +35,14 @@ RESTAURANT_MAX_JSON_BODY_BYTES=131072
 RESTAURANT_APP_VERSION=production
 RESTAURANT_DB_SCHEMA=restaurant_app
 RESTAURANT_DB_SSLMODE=require
-DATABASE_URL=postgres://postgres.project-ref:<password>@aws-0-region.pooler.supabase.com:6543/postgres
+RESTAURANT_DB_HOST=aws-0-region.pooler.supabase.com
+RESTAURANT_DB_PORT=6543
+RESTAURANT_DB_NAME=postgres
+RESTAURANT_DB_USER=postgres.project-ref
+RESTAURANT_DB_PASSWORD=<password>
 ```
 
-Ambil `DATABASE_URL` dari Supabase Dashboard > Connect > Transaction pooler. Jangan set `RESTAURANT_DB_PATH` di Vercel kecuali sudah memakai storage persisten yang benar-benar tersedia. Jika `DATABASE_URL` kosong, Vercel hanya berjalan sebagai demo ephemeral.
+Ambil host dan user dari Supabase Dashboard > Connect > Transaction pooler. Variabel terpisah ini lebih aman daripada `DATABASE_URL` karena password tidak perlu URL encode. Jangan set `RESTAURANT_DB_PATH` di Vercel kecuali sudah memakai storage persisten yang benar-benar tersedia. Jika konfigurasi Postgres kosong, Vercel hanya berjalan sebagai demo ephemeral.
 
 ## Deploy
 

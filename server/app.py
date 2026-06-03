@@ -27,7 +27,17 @@ def default_db_path():
 
 DB_PATH = Path(os.environ.get("RESTAURANT_DB_PATH") or default_db_path())
 DATABASE_URL = os.environ.get("DATABASE_URL") or os.environ.get("RESTAURANT_DATABASE_URL")
-USE_POSTGRES = bool(DATABASE_URL)
+POSTGRES_HOST = os.environ.get("RESTAURANT_DB_HOST", "").strip()
+try:
+    POSTGRES_PORT = int(os.environ.get("RESTAURANT_DB_PORT", 6543))
+except (TypeError, ValueError):
+    POSTGRES_PORT = 6543
+POSTGRES_PORT = POSTGRES_PORT if POSTGRES_PORT > 0 else 6543
+POSTGRES_NAME = os.environ.get("RESTAURANT_DB_NAME", "postgres").strip() or "postgres"
+POSTGRES_USER = os.environ.get("RESTAURANT_DB_USER", "").strip()
+POSTGRES_PASSWORD = os.environ.get("RESTAURANT_DB_PASSWORD", "")
+USE_POSTGRES_CONFIG = bool(POSTGRES_HOST and POSTGRES_USER and POSTGRES_PASSWORD)
+USE_POSTGRES = bool(USE_POSTGRES_CONFIG or DATABASE_URL)
 POSTGRES_SCHEMA = os.environ.get("RESTAURANT_DB_SCHEMA", "restaurant_app").strip() or "restaurant_app"
 POSTGRES_SSLMODE = os.environ.get("RESTAURANT_DB_SSLMODE", "require").strip() or "require"
 
@@ -401,12 +411,24 @@ class PostgresConnection:
 def connect_db():
     if USE_POSTGRES:
         psycopg2, RealDictCursor = import_psycopg2()
-        connection = psycopg2.connect(
-            DATABASE_URL,
-            cursor_factory=RealDictCursor,
-            sslmode=POSTGRES_SSLMODE,
-            connect_timeout=10,
-        )
+        connection_options = {
+            "cursor_factory": RealDictCursor,
+            "sslmode": POSTGRES_SSLMODE,
+            "connect_timeout": 10,
+        }
+        if USE_POSTGRES_CONFIG:
+            connection_options.update(
+                {
+                    "host": POSTGRES_HOST,
+                    "port": POSTGRES_PORT,
+                    "dbname": POSTGRES_NAME,
+                    "user": POSTGRES_USER,
+                    "password": POSTGRES_PASSWORD,
+                }
+            )
+            connection = psycopg2.connect(**connection_options)
+        else:
+            connection = psycopg2.connect(DATABASE_URL, **connection_options)
         db = PostgresConnection(connection)
         db.ensure_schema()
     else:

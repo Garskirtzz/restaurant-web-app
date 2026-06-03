@@ -7,7 +7,7 @@ Aplikasi restoran dengan halaman customer, panel admin, backend Python, SQLite l
 Project ini sudah siap untuk pengembangan lokal yang rapi:
 
 - Frontend dipisah menjadi HTML, CSS, dan modul JavaScript per domain.
-- Backend lokal memakai SQLite, sementara deploy Vercel dapat memakai Supabase Postgres melalui `DATABASE_URL`.
+- Backend lokal memakai SQLite, sementara deploy Vercel dapat memakai Supabase Postgres melalui `DATABASE_URL` atau variabel Postgres terpisah.
 - Admin dan customer flow sudah terhubung ke API saat server aktif.
 - Smoke test Playwright tersedia untuk cek halaman publik, login modal, login admin, dan pengaturan restoran.
 
@@ -135,7 +135,7 @@ Database test dan artefak test diabaikan oleh Git.
 
 Project ini sudah punya adapter Vercel Python Function di `api/index.py`, konfigurasi `vercel.json`, dan dukungan Supabase Postgres. Baca [DEPLOYMENT.md](DEPLOYMENT.md) sebelum deploy.
 
-Catatan penting: isi `DATABASE_URL` dari Supabase Transaction Pooler di Vercel agar data order/customer permanen. Jika `DATABASE_URL` kosong, SQLite di Vercel hanya demo/ephemeral.
+Catatan penting: isi konfigurasi Supabase Transaction Pooler di Vercel agar data order/customer permanen. Gunakan `RESTAURANT_DB_HOST`, `RESTAURANT_DB_USER`, dan `RESTAURANT_DB_PASSWORD` jika password sulit dipakai di URL. Jika konfigurasi Postgres kosong, SQLite di Vercel hanya demo/ephemeral.
 
 Sebelum publikasi, jalankan checklist di [RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md).
 

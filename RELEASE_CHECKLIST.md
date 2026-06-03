@@ -25,13 +25,13 @@ Gunakan checklist ini sebelum publikasi demo atau production.
 - [ ] Token logout dicabut dari server.
 - [ ] Endpoint mutasi membutuhkan token sesuai role.
 - [ ] File `.env` tidak masuk Git.
-- [ ] `DATABASE_URL` Supabase tidak pernah ditulis di source code.
+- [ ] Password Supabase tidak pernah ditulis di source code.
 - [ ] RLS/revokasi akses Supabase untuk schema aplikasi sudah ditinjau sebelum production publik.
 
 ## Data
 
 - [ ] SQLite lokal sudah dibackup jika masih dipakai untuk development.
-- [ ] Untuk production, `DATABASE_URL` Supabase Transaction Pooler sudah disiapkan.
+- [ ] Untuk production, konfigurasi Supabase Transaction Pooler sudah disiapkan di Vercel.
 - [ ] Strategi migrasi data order/customer sudah jelas.
 
 ## Vercel

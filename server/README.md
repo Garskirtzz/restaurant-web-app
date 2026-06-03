@@ -43,9 +43,22 @@ python server/app.py --self-test
 python server/app.py
 ```
 
+Jika password mengandung karakter khusus, gunakan variabel terpisah agar tidak perlu URL encode:
+
+```powershell
+$env:RESTAURANT_DB_HOST="aws-0-region.pooler.supabase.com"
+$env:RESTAURANT_DB_PORT="6543"
+$env:RESTAURANT_DB_NAME="postgres"
+$env:RESTAURANT_DB_USER="postgres.project-ref"
+$env:RESTAURANT_DB_PASSWORD="password-baru"
+$env:RESTAURANT_DB_SCHEMA="restaurant_app"
+python server/app.py --self-test
+```
+
 Catatan:
 
 - Gunakan Transaction Pooler untuk Vercel/serverless.
+- Jika `RESTAURANT_DB_HOST`, `RESTAURANT_DB_USER`, dan `RESTAURANT_DB_PASSWORD` diisi, backend memakainya dan mengabaikan `DATABASE_URL`.
 - Jangan commit password database ke repository.
 - Schema aplikasi dibuat di `restaurant_app`, bukan `public`, agar tabel tidak menjadi permukaan publik utama.
 - `RESTAURANT_DB_SSLMODE` default-nya `require`.
