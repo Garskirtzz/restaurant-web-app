@@ -20,6 +20,8 @@
         let orderNumber = null;
         let pendingCustomerAuthAction = null;
         let apiAvailable = false;
+        const formatCurrency = window.RestaurantUtils.formatNumber;
+        const escapeHtml = window.RestaurantUtils.escapeHTML;
 
         // DOM Elements
         const cartPreview = document.getElementById('cart-preview');
@@ -61,10 +63,6 @@
             return datePart + randomPart;
         }
 
-        function formatCurrency(value) {
-            return Number(value || 0).toLocaleString('id-ID');
-        }
-
         function formatOrderDate(timestamp) {
             if (!timestamp) {
                 return '-';
@@ -78,18 +76,6 @@
             } catch (error) {
                 return '-';
             }
-        }
-
-        function escapeHtml(value) {
-            const escapeMap = {
-                '&': '&amp;',
-                '<': '&lt;',
-                '>': '&gt;',
-                '"': '&quot;',
-                "'": '&#039;'
-            };
-
-            return String(value ?? '').replace(/[&<>"']/g, char => escapeMap[char]);
         }
 
         function showToast(message) {

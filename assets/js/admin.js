@@ -62,26 +62,18 @@
             completed: 0
         };
         let orderNotificationReady = false;
-
-        function readArrayFromStorage(key, fallback = []) {
-            const raw = localStorage.getItem(key);
-
-            if (!raw) {
-                return [...fallback];
-            }
-
-            try {
-                const parsed = JSON.parse(raw);
-                return Array.isArray(parsed) ? parsed : [...fallback];
-            } catch (error) {
-                console.error(`Gagal membaca ${key}:`, error);
-                return [...fallback];
-            }
-        }
-
-        function writeArrayToStorage(key, value) {
-            localStorage.setItem(key, JSON.stringify(value));
-        }
+        const {
+            readArrayFromStorage,
+            writeArrayToStorage,
+            escapeHTML,
+            encodeKey,
+            decodeKey,
+            getOrderId,
+            formatCurrency,
+            getLocalDateKey,
+            normalizeTableKey,
+            formatTableNumber
+        } = window.RestaurantUtils;
 
         function getAdminToken() {
             return localStorage.getItem(ADMIN_AUTH_TOKEN_KEY) || '';
@@ -187,38 +179,6 @@
             }
         }
 
-        function escapeHTML(value) {
-            return String(value ?? '').replace(/[&<>"']/g, function (char) {
-                return {
-                    '&': '&amp;',
-                    '<': '&lt;',
-                    '>': '&gt;',
-                    '"': '&quot;',
-                    "'": '&#39;'
-                }[char];
-            });
-        }
-
-        function encodeKey(value) {
-            return encodeURIComponent(String(value ?? ''));
-        }
-
-        function decodeKey(value) {
-            try {
-                return decodeURIComponent(String(value ?? ''));
-            } catch (error) {
-                return String(value ?? '');
-            }
-        }
-
-        function getOrderId(order) {
-            return String(order.id || order.orderNumber || '');
-        }
-
-        function formatCurrency(value) {
-            return 'Rp' + Number(value || 0).toLocaleString('id-ID');
-        }
-
         function formatDate(value) {
             const date = new Date(value);
             return Number.isNaN(date.getTime()) ? '-' : date.toLocaleDateString('id-ID');
@@ -227,33 +187,6 @@
         function formatDateTime(value) {
             const date = new Date(value);
             return Number.isNaN(date.getTime()) ? '-' : date.toLocaleString('id-ID');
-        }
-
-        function getLocalDateKey(value) {
-            const date = value ? new Date(value) : new Date();
-
-            if (Number.isNaN(date.getTime())) {
-                return '';
-            }
-
-            const year = date.getFullYear();
-            const month = String(date.getMonth() + 1).padStart(2, '0');
-            const day = String(date.getDate()).padStart(2, '0');
-            return `${year}-${month}-${day}`;
-        }
-
-        function normalizeTableKey(tableNumber) {
-            const match = String(tableNumber || '').match(/\d+/);
-            return match ? match[0] : '';
-        }
-
-        function formatTableNumber(tableNumber) {
-            if (!tableNumber) {
-                return 'Take Away';
-            }
-
-            const text = String(tableNumber);
-            return /^meja\s+/i.test(text) ? text : `Meja ${text}`;
         }
 
         function getStatusText(status) {
