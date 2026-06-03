@@ -132,6 +132,12 @@ DEFAULT_TABLES = [
     {"number": "8", "capacity": 8},
 ]
 
+MENU_CATEGORIES = {"food", "drink", "dessert"}
+ORDER_STATUSES = {"pending", "processing", "completed", "cancelled"}
+PAYMENT_METHODS = {"cash", "qris", "bank-transfer"}
+MAX_ORDER_ITEMS = 50
+MAX_ORDER_QUANTITY = 99
+
 
 def utc_now_dt():
     return datetime.now(timezone.utc)
@@ -223,6 +229,30 @@ def password_needs_rehash(stored_hash):
         return True
 
     return algorithm != PASSWORD_SCHEME or iterations != PASSWORD_ITERATIONS
+
+
+def parse_int(value):
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def parse_bool(value):
+    if isinstance(value, bool):
+        return value
+
+    if isinstance(value, (int, float)):
+        return value != 0
+
+    if isinstance(value, str):
+        normalized = value.strip().lower()
+        if normalized in {"1", "true", "yes", "on"}:
+            return True
+        if normalized in {"0", "false", "no", "off"}:
+            return False
+
+    return bool(value)
 
 
 def row_to_dict(row):
@@ -472,24 +502,32 @@ class RestaurantHandler(BaseHTTPRequestHandler):
                 self.handle_api("GET")
             else:
                 self.serve_static()
+        except ValueError as error:
+            self.json_response({"error": str(error)}, 400)
         except Exception as error:
             self.json_response({"error": str(error)}, 500)
 
     def do_POST(self):
         try:
             self.handle_api("POST")
+        except ValueError as error:
+            self.json_response({"error": str(error)}, 400)
         except Exception as error:
             self.json_response({"error": str(error)}, 500)
 
     def do_PUT(self):
         try:
             self.handle_api("PUT")
+        except ValueError as error:
+            self.json_response({"error": str(error)}, 400)
         except Exception as error:
             self.json_response({"error": str(error)}, 500)
 
     def do_DELETE(self):
         try:
             self.handle_api("DELETE")
+        except ValueError as error:
+            self.json_response({"error": str(error)}, 400)
         except Exception as error:
             self.json_response({"error": str(error)}, 500)
 
@@ -517,17 +555,28 @@ class RestaurantHandler(BaseHTTPRequestHandler):
 
         raw_body = self.rfile.read(content_length).decode("utf-8")
         try:
-            return json.loads(raw_body)
+            payload = json.loads(raw_body)
         except json.JSONDecodeError:
             raise ValueError("Request body harus JSON valid")
 
-    def get_auth_user(self):
+        if not isinstance(payload, dict):
+            raise ValueError("Request body harus berupa JSON object")
+
+        return payload
+
+    def get_bearer_token(self):
         auth_header = self.headers.get("Authorization", "")
         prefix = "Bearer "
         if not auth_header.startswith(prefix):
+            return ""
+
+        return auth_header[len(prefix) :].strip()
+
+    def get_auth_user(self):
+        token = self.get_bearer_token()
+        if not token:
             return None
 
-        token = auth_header[len(prefix) :].strip()
         with connect_db() as db:
             return session_user(db, token)
 
@@ -562,6 +611,10 @@ class RestaurantHandler(BaseHTTPRequestHandler):
 
         if method == "POST" and path == "/api/auth/admin/login":
             self.login_user("admin")
+            return
+
+        if method == "POST" and path == "/api/auth/logout":
+            self.logout_user()
             return
 
         if method == "GET" and path == "/api/users/me":
@@ -740,6 +793,14 @@ class RestaurantHandler(BaseHTTPRequestHandler):
 
         self.json_response({"token": token, "expiresAt": expires_at, "user": public_user(user)})
 
+    def logout_user(self):
+        token = self.get_bearer_token()
+        if token:
+            with connect_db() as db:
+                db.execute("DELETE FROM sessions WHERE token = ?", (token,))
+
+        self.json_response({"ok": True})
+
     def list_customers(self):
         with connect_db() as db:
             rows = db.execute(
@@ -820,6 +881,25 @@ class RestaurantHandler(BaseHTTPRequestHandler):
 
     def create_menu_item(self):
         payload = self.read_json()
+        name = str(payload.get("name", "")).strip()
+        category = str(payload.get("category", "")).strip()
+        price = parse_int(payload.get("price"))
+        description = str(payload.get("description", "")).strip()
+        image = str(payload.get("image", "")).strip()
+        available = 1 if parse_bool(payload.get("available", True)) else 0
+
+        if not name:
+            self.json_response({"error": "Nama menu wajib diisi"}, 400)
+            return
+
+        if category not in MENU_CATEGORIES:
+            self.json_response({"error": "Kategori menu tidak valid"}, 400)
+            return
+
+        if price is None or price <= 0:
+            self.json_response({"error": "Harga menu harus berupa angka lebih dari 0"}, 400)
+            return
+
         now = utc_now()
         with connect_db() as db:
             cursor = db.execute(
@@ -828,12 +908,12 @@ class RestaurantHandler(BaseHTTPRequestHandler):
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
-                    str(payload.get("name", "")).strip(),
-                    str(payload.get("category", "")).strip(),
-                    int(payload.get("price", 0)),
-                    str(payload.get("description", "")).strip(),
-                    str(payload.get("image", "")).strip(),
-                    1 if payload.get("available", True) else 0,
+                    name,
+                    category,
+                    price,
+                    description,
+                    image,
+                    available,
                     now,
                     now,
                 ),
@@ -843,8 +923,37 @@ class RestaurantHandler(BaseHTTPRequestHandler):
 
     def update_menu_item(self, item_id):
         payload = self.read_json()
-        allowed = {"name", "category", "price", "description", "image", "available"}
-        updates = {key: payload[key] for key in allowed if key in payload}
+        updates = {}
+
+        if "name" in payload:
+            name = str(payload["name"]).strip()
+            if not name:
+                self.json_response({"error": "Nama menu wajib diisi"}, 400)
+                return
+            updates["name"] = name
+
+        if "category" in payload:
+            category = str(payload["category"]).strip()
+            if category not in MENU_CATEGORIES:
+                self.json_response({"error": "Kategori menu tidak valid"}, 400)
+                return
+            updates["category"] = category
+
+        if "price" in payload:
+            price = parse_int(payload["price"])
+            if price is None or price <= 0:
+                self.json_response({"error": "Harga menu harus berupa angka lebih dari 0"}, 400)
+                return
+            updates["price"] = price
+
+        if "description" in payload:
+            updates["description"] = str(payload["description"]).strip()
+
+        if "image" in payload:
+            updates["image"] = str(payload["image"]).strip()
+
+        if "available" in payload:
+            updates["available"] = 1 if parse_bool(payload["available"]) else 0
 
         if not updates:
             self.json_response({"error": "Tidak ada data yang diubah"}, 400)
@@ -852,7 +961,7 @@ class RestaurantHandler(BaseHTTPRequestHandler):
 
         updates["updated_at"] = utc_now()
         assignments = ", ".join([f"{key} = ?" for key in updates.keys()])
-        values = [int(value) if key in ("price", "available") else value for key, value in updates.items()]
+        values = list(updates.values())
         values.append(item_id)
 
         with connect_db() as db:
@@ -878,6 +987,17 @@ class RestaurantHandler(BaseHTTPRequestHandler):
 
     def create_table(self):
         payload = self.read_json()
+        table_number = str(payload.get("number", "")).strip()
+        capacity = parse_int(payload.get("capacity"))
+
+        if not table_number:
+            self.json_response({"error": "Nomor meja wajib diisi"}, 400)
+            return
+
+        if capacity is None or capacity <= 0:
+            self.json_response({"error": "Kapasitas meja harus berupa angka lebih dari 0"}, 400)
+            return
+
         now = utc_now()
         try:
             with connect_db() as db:
@@ -886,7 +1006,7 @@ class RestaurantHandler(BaseHTTPRequestHandler):
                     INSERT INTO restaurant_tables (number, capacity, created_at, updated_at)
                     VALUES (?, ?, ?, ?)
                     """,
-                    (str(payload.get("number", "")).strip(), int(payload.get("capacity", 0)), now, now),
+                    (table_number, capacity, now, now),
                 )
                 table = db.execute("SELECT * FROM restaurant_tables WHERE id = ?", (cursor.lastrowid,)).fetchone()
         except sqlite3.IntegrityError:
@@ -899,18 +1019,36 @@ class RestaurantHandler(BaseHTTPRequestHandler):
         payload = self.read_json()
         updates = {}
         if "number" in payload:
-            updates["number"] = str(payload["number"]).strip()
+            table_number = str(payload["number"]).strip()
+            if not table_number:
+                self.json_response({"error": "Nomor meja wajib diisi"}, 400)
+                return
+            updates["number"] = table_number
+
         if "capacity" in payload:
-            updates["capacity"] = int(payload["capacity"])
+            capacity = parse_int(payload["capacity"])
+            if capacity is None or capacity <= 0:
+                self.json_response({"error": "Kapasitas meja harus berupa angka lebih dari 0"}, 400)
+                return
+            updates["capacity"] = capacity
+
+        if not updates:
+            self.json_response({"error": "Tidak ada data yang diubah"}, 400)
+            return
+
         updates["updated_at"] = utc_now()
 
         assignments = ", ".join([f"{key} = ?" for key in updates.keys()])
         values = list(updates.values())
         values.append(table_id)
 
-        with connect_db() as db:
-            db.execute(f"UPDATE restaurant_tables SET {assignments} WHERE id = ?", values)
-            table = db.execute("SELECT * FROM restaurant_tables WHERE id = ?", (table_id,)).fetchone()
+        try:
+            with connect_db() as db:
+                db.execute(f"UPDATE restaurant_tables SET {assignments} WHERE id = ?", values)
+                table = db.execute("SELECT * FROM restaurant_tables WHERE id = ?", (table_id,)).fetchone()
+        except sqlite3.IntegrityError:
+            self.json_response({"error": "Nomor meja sudah ada"}, 409)
+            return
 
         if not table:
             self.json_response({"error": "Meja tidak ditemukan"}, 404)
@@ -951,16 +1089,25 @@ class RestaurantHandler(BaseHTTPRequestHandler):
             self.json_response({"error": "items wajib berupa array dan tidak boleh kosong"}, 400)
             return
 
+        if len(items) > MAX_ORDER_ITEMS:
+            self.json_response({"error": f"Jumlah item pesanan maksimal {MAX_ORDER_ITEMS}"}, 400)
+            return
+
         normalized_items = []
         total = 0
 
         for item in items:
-            name = str(item.get("name", "")).strip()
-            price = int(item.get("price", 0))
-            quantity = int(item.get("quantity", 0))
-            if not name or price < 0 or quantity <= 0:
+            if not isinstance(item, dict):
                 self.json_response({"error": "Item pesanan tidak valid"}, 400)
                 return
+
+            name = str(item.get("name", "")).strip()
+            price = parse_int(item.get("price"))
+            quantity = parse_int(item.get("quantity"))
+            if not name or price is None or quantity is None or price <= 0 or quantity <= 0 or quantity > MAX_ORDER_QUANTITY:
+                self.json_response({"error": "Item pesanan tidak valid"}, 400)
+                return
+
             subtotal = price * quantity
             total += subtotal
             normalized_items.append({"name": name, "price": price, "quantity": quantity, "subtotal": subtotal})
@@ -968,9 +1115,19 @@ class RestaurantHandler(BaseHTTPRequestHandler):
         order_number = str(payload.get("orderNumber") or generate_order_number())
         timestamp = utc_now()
         table_number = str(payload.get("tableNumber", "")).strip()
+        payment_method = str(payload.get("paymentMethod", "cash")).strip()
+        customer_name = str(payload.get("customerName") or user["name"]).strip()
 
         if not table_number:
             self.json_response({"error": "tableNumber wajib diisi"}, 400)
+            return
+
+        if payment_method not in PAYMENT_METHODS:
+            self.json_response({"error": "Metode pembayaran tidak valid"}, 400)
+            return
+
+        if not customer_name:
+            self.json_response({"error": "customerName wajib diisi"}, 400)
             return
 
         order = {
@@ -978,15 +1135,25 @@ class RestaurantHandler(BaseHTTPRequestHandler):
             "order_number": order_number,
             "customer_user_id": user["id"],
             "customer_username": user["username"],
-            "customer_name": str(payload.get("customerName") or user["name"]),
+            "customer_name": customer_name,
             "table_number": table_number,
             "total": total,
             "status": "pending",
-            "payment_method": str(payload.get("paymentMethod", "cash")),
+            "payment_method": payment_method,
             "timestamp": timestamp,
         }
 
         with connect_db() as db:
+            table_exists = db.execute("SELECT id FROM restaurant_tables WHERE number = ?", (table_number,)).fetchone()
+            if not table_exists:
+                self.json_response({"error": "Nomor meja tidak ditemukan"}, 400)
+                return
+
+            while db.execute("SELECT id FROM orders WHERE id = ?", (order["id"],)).fetchone():
+                order_number = generate_order_number()
+                order["id"] = order_number
+                order["order_number"] = order_number
+
             db.execute(
                 """
                 INSERT INTO orders (
@@ -1022,9 +1189,8 @@ class RestaurantHandler(BaseHTTPRequestHandler):
     def update_order_status(self, order_id):
         payload = self.read_json()
         status = str(payload.get("status", "")).strip()
-        allowed_statuses = {"pending", "processing", "completed", "cancelled"}
 
-        if status not in allowed_statuses:
+        if status not in ORDER_STATUSES:
             self.json_response({"error": "Status tidak valid"}, 400)
             return
 

@@ -25,6 +25,7 @@
         const successOrderTotal = document.getElementById('success-order-total');
         const orderHistoryList = document.getElementById('order-history-list');
         const authNavLabel = document.getElementById('auth-nav-label');
+        const signOutButton = document.getElementById('sign-out-btn');
         const toastElement = document.getElementById('toast');
 
         // Initialize
@@ -143,9 +144,36 @@
                 authNavLabel.textContent = customer ? (customer.name || customer.username) : 'Sign In';
             }
 
+            if (signOutButton) {
+                signOutButton.hidden = !customer;
+            }
+
             if (customer) {
                 customerInfo.name = customer.name || customer.username;
+            } else {
+                customerInfo.name = '';
+                customerInfo.tableNumber = '';
             }
+        }
+
+        async function customerSignOut() {
+            const token = getCustomerToken();
+
+            if (apiAvailable && token) {
+                try {
+                    await RestaurantAPI.logout(token);
+                } catch (error) {
+                    console.error('Gagal logout dari server:', error);
+                }
+            }
+
+            cart = [];
+            saveCartToStorage();
+            clearCustomerSession();
+            await hydrateCustomerSession();
+            updateCartUI();
+            renderOrderHistory();
+            showToast('Signed out.');
         }
 
         function requireCustomerSignIn(message, afterSignIn) {

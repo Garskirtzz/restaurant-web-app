@@ -64,6 +64,13 @@
             });
         },
 
+        logout(token) {
+            return request('/api/auth/logout', {
+                method: 'POST',
+                token
+            });
+        },
+
         getCurrentUser(token) {
             return request('/api/users/me', {
                 token

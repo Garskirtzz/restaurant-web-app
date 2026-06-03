@@ -21,6 +21,19 @@ async function expectNoMojibake(page) {
   expect(bodyText).not.toMatch(/[ÃÂðâ�]/);
 }
 
+async function requestAdminToken(request) {
+  const response = await request.post('/api/auth/admin/login', {
+    data: {
+      username: 'admin',
+      password: 'password123'
+    }
+  });
+
+  expect(response.ok()).toBeTruthy();
+  const payload = await response.json();
+  return payload.token;
+}
+
 test('public menu page renders core navigation and menu content', async ({ page }) => {
   await page.goto('/index.html');
 
@@ -70,6 +83,34 @@ test('admin dashboard rejects stale localStorage login flag without token', asyn
 
   await expect(page.locator('#login-page')).toBeVisible();
   await expect(page.locator('#admin-panel')).toBeHidden();
+});
+
+test('api logout revokes active admin token', async ({ request }) => {
+  const token = await requestAdminToken(request);
+  const headers = { Authorization: `Bearer ${token}` };
+
+  const beforeLogout = await request.get('/api/users/me', { headers });
+  expect(beforeLogout.ok()).toBeTruthy();
+
+  const logout = await request.post('/api/auth/logout', { headers });
+  expect(logout.ok()).toBeTruthy();
+
+  const afterLogout = await request.get('/api/users/me', { headers });
+  expect(afterLogout.status()).toBe(401);
+});
+
+test('api rejects invalid menu payload before database write', async ({ request }) => {
+  const token = await requestAdminToken(request);
+  const response = await request.post('/api/menu', {
+    headers: { Authorization: `Bearer ${token}` },
+    data: {
+      name: 'Menu Invalid',
+      category: 'food',
+      price: 'not-a-number'
+    }
+  });
+
+  expect(response.status()).toBe(400);
 });
 
 test('admin settings save to API-backed restaurant settings', async ({ page, request }) => {

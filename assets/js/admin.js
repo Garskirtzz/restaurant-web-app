@@ -130,11 +130,25 @@
             }
         }
 
-        function logout() {
+        async function revokeActiveSession() {
+            const token = localStorage.getItem('adminLoggedIn') === 'true' ? getAdminToken() : getCustomerToken();
+            if (!apiAvailable || !token) {
+                return;
+            }
+
+            try {
+                await RestaurantAPI.logout(token);
+            } catch (error) {
+                console.error('Gagal logout dari server:', error);
+            }
+        }
+
+        async function logout() {
             if (!confirm('Apakah Anda yakin ingin logout?')) {
                 return;
             }
 
+            await revokeActiveSession();
             clearStoredAuthState();
             showPanel('login-page');
         }

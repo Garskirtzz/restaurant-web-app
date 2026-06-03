@@ -72,6 +72,7 @@ GET  /api/health
 POST /api/auth/customer/register
 POST /api/auth/customer/login
 POST /api/auth/admin/login
+POST /api/auth/logout
 GET  /api/users/me
 PUT  /api/users/me
 GET  /api/users/customers
@@ -91,7 +92,7 @@ PUT  /api/orders/{orderId}/status
 GET  /api/reports/best-seller?start=YYYY-MM-DD&end=YYYY-MM-DD
 ```
 
-Endpoint yang mengubah data admin membutuhkan token admin dari login. Endpoint order customer membutuhkan token customer. Token kadaluarsa sesuai `RESTAURANT_SESSION_TTL_SECONDS`.
+Endpoint yang mengubah data admin membutuhkan token admin dari login. Endpoint order customer membutuhkan token customer. Token kadaluarsa sesuai `RESTAURANT_SESSION_TTL_SECONDS` dan bisa dicabut lewat `POST /api/auth/logout`.
 
 Header token:
 
