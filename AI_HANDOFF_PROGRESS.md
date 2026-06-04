@@ -301,6 +301,7 @@ Added later (2026-06-04):
 Security caveats:
 - Tokens are still stored in `localStorage`; acceptable for this prototype but not ideal for high-risk production.
 - CSP `script-src` is now strict (`'self'`, no `'unsafe-inline'`). `style-src` still allows `'unsafe-inline'` because inline `style=` attributes remain.
+- IMPORTANT (Vercel): static pages are served by Vercel's CDN, not the Python server, so `server/app.py` security headers only apply to `/api/*` in production. The page-level security headers (CSP, X-Frame-Options, HSTS, etc.) are therefore also configured in `vercel.json` `headers` for all non-API routes. Keep the two in sync. Locally the Python server still serves headers for everything.
 - `admin - Copy.html` is a tracked but unreferenced backup that still contains inline handlers; it is not part of the app and will not work under the strict CSP. Recommend deleting it.
 - Rate limiting/lockout state is in-memory and per-process, so on Vercel it is best-effort per warm instance, not shared across scaled instances. A shared store (DB/Redis) is needed for strict guarantees.
 - No formal password reset flow yet.
