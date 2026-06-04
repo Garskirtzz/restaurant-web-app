@@ -63,13 +63,26 @@ Ambil host dan user dari Supabase Dashboard > Connect > Transaction pooler. Vari
 
 Skenario: dua nama/tampilan brand berbeda di dua domain, tetapi berbagi server, API, database, menu, order, dan admin yang sama.
 
-Langkah:
+Domain live saat ini (satu project `project-hqcx7`, satu Supabase):
 
-1. Tambahkan **kedua domain** ke project Vercel yang sama (Settings > Domains).
-2. Set `RESTAURANT_ALLOWED_ORIGINS` ke kedua origin, dipisah koma, lalu redeploy:
+```text
+https://warkop-kentjana.vercel.app   -> Warkop Kentjana
+https://warkop-balap.vercel.app       -> Warkop Balap
+```
+
+Langkah (jika menambah/ubah domain):
+
+1. Tambahkan domain ke project Vercel yang sama, mis. via CLI:
+
+   ```powershell
+   vercel link --yes --project project-hqcx7 --scope garskirtz-s-projects
+   vercel domains add <domain> --scope garskirtz-s-projects
+   ```
+
+2. CORS: tiap brand memanggil `/api` di origin-nya sendiri (same-origin), jadi `RESTAURANT_ALLOWED_ORIGINS` **tidak wajib** memuat domain ini. Set hanya jika ada pemanggilan lintas-origin:
 
    ```text
-   RESTAURANT_ALLOWED_ORIGINS=https://warkop-kentjana.example.com,https://warkop-balap.example.com
+   RESTAURANT_ALLOWED_ORIGINS=https://warkop-kentjana.vercel.app,https://warkop-balap.vercel.app
    ```
 
 3. Branding sudah diatur di `assets/js/brand-config.js` untuk dua brand: **Warkop Kentjana** dan **Warkop Balap**. Resolusinya berurutan:

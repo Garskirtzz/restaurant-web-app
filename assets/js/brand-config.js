@@ -15,8 +15,8 @@
 window.RestaurantBranding = {
     DEFAULT: { name: 'Menu Digital Restoran', title: 'Menu Digital Restoran' },
     byHost: {
-        // 'warkop-kentjana.vercel.app': { name: 'Warkop Kentjana', title: 'Warkop Kentjana' },
-        // 'warkop-balap.vercel.app': { name: 'Warkop Balap', title: 'Warkop Balap' }
+        'warkop-kentjana.vercel.app': { name: 'Warkop Kentjana', title: 'Warkop Kentjana' },
+        'warkop-balap.vercel.app': { name: 'Warkop Balap', title: 'Warkop Balap' }
     },
     matchers: [
         { includes: 'kentjana', brand: { name: 'Warkop Kentjana', title: 'Warkop Kentjana' } },

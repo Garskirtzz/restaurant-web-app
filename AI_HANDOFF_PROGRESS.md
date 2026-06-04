@@ -385,9 +385,12 @@ menu, orders, and admin. Status:
   domain containing the brand word; unknown hosts (localhost/tests) keep the default.
   CORS already supports multiple origins via comma-separated `RESTAURANT_ALLOWED_ORIGINS`.
   See `DEPLOYMENT.md` > "Dua Brand, Satu Server".
-- Pending (needs the real domains, ties into Priority 2): add both domains to the one
-  Vercel project, set `RESTAURANT_ALLOWED_ORIGINS` to both. Only if a final domain does
-  NOT contain the brand word, add an exact entry under `brand-config.js` `byHost`.
+- Done: both domains are LIVE on the one Vercel project `project-hqcx7`:
+  `warkop-kentjana.vercel.app` and `warkop-balap.vercel.app` (both return `/api/health` ok).
+  Exact entries are set in `brand-config.js` `byHost`. CORS is not required because each
+  brand calls its own same-origin `/api`.
+- Pending: the per-brand visual only appears AFTER the current local commits are deployed
+  (production is still schema v2 / old code). Deploy was intentionally deferred by the owner.
 - Not multi-tenant: data is shared between the two brands by design.
 
 ### Priority 1: Final Branding and Real Restaurant Content
