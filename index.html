@@ -37,10 +37,18 @@
         <symbol id="icon-bank" viewBox="0 0 24 24">
             <path d="M3 10h18M5 10v8M9 10v8M15 10v8M19 10v8M4 18h16M12 3l9 5H3l9-5Z"></path>
         </symbol>
+        <symbol id="icon-cup" viewBox="0 0 24 24">
+            <path d="M4 8h13v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5V8Z"></path>
+            <path d="M17 9h2a2.5 2.5 0 0 1 0 5h-2"></path>
+            <path d="M7 2.5c0 1-1 1.2-1 2.2M10.5 2.5c0 1-1 1.2-1 2.2M14 2.5c0 1-1 1.2-1 2.2"></path>
+        </symbol>
     </svg>
     <header class="top-navbar">
         <div class="nav-shell">
             <div class="nav-brand">
+                <span class="nav-logo" aria-hidden="true">
+                    <svg class="ui-icon"><use href="#icon-cup"></use></svg>
+                </span>
                 <h1 data-brand-name>Menu Digital Restoran</h1>
             </div>
             <div class="nav-actions">
@@ -90,6 +98,12 @@
     </div>
 
     <main>
+        <section class="hero" aria-label="Sambutan">
+            <span class="hero-kicker"><span data-brand-name>Menu Digital Restoran</span> &middot; Sejak pagi</span>
+            <h2 class="hero-title">Kopi tubruk &amp; makanan rumahan, hangat dari dapur kami.</h2>
+            <p class="hero-tagline">Pilih menu favoritmu, pesan langsung dari meja, kami antar selagi panas.</p>
+        </section>
+
         <div class="menu-filter">
             <div class="menu-filter-copy">
                 <span class="menu-filter-kicker">Katalog</span>

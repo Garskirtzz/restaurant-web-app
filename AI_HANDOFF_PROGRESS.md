@@ -456,6 +456,8 @@ Still recommended:
 
 ### Priority 5: UI/UX Polish
 
+Done (2026-06-04): subtle storefront polish in the existing Grey Aesthetic — added a brand logo mark (coffee-cup badge) in the navbar and a hero section (kicker + headline + tagline) on `index.html`. Palette unchanged; per-domain branding fills the hero kicker too.
+
 Recommended:
 - Continue premium visual pass using `ui-architecture.md`.
 - Consider making a Figma design only if you want a very specific luxury visual direction. It is not required to continue coding, but it helps if the target is "website mahal" with exact spacing, visual hierarchy, and component behavior.

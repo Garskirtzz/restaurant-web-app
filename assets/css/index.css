@@ -1912,3 +1912,75 @@
             }
         }
 
+        /* Subtle polish: brand logo mark + hero */
+        .nav-logo {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 38px;
+            height: 38px;
+            margin-right: 11px;
+            flex: 0 0 auto;
+            background: var(--text-dark);
+            color: var(--bg-card);
+            border: 1px solid var(--text-dark);
+            border-radius: 12px;
+        }
+
+        .nav-logo .ui-icon {
+            width: 21px;
+            height: 21px;
+            stroke-width: 1.8;
+        }
+
+        .hero {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-width: 680px;
+            margin-bottom: 46px;
+        }
+
+        .hero::after {
+            content: none;
+        }
+
+        .hero-kicker {
+            color: var(--text-muted);
+            font-size: 0.76rem;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+        }
+
+        .hero-title {
+            margin: 0;
+            padding: 0;
+            border: 0;
+            color: var(--text-dark);
+            font-size: clamp(1.7rem, 3.4vw, 2.65rem);
+            font-weight: 780;
+            line-height: 1.1;
+            letter-spacing: -0.01em;
+        }
+
+        .hero-tagline {
+            margin: 0;
+            max-width: 56ch;
+            color: var(--text-muted);
+            font-size: clamp(1rem, 1.5vw, 1.12rem);
+            line-height: 1.6;
+        }
+
+        @media (max-width: 640px) {
+            .hero {
+                margin-bottom: 32px;
+            }
+
+            .nav-logo {
+                width: 34px;
+                height: 34px;
+                margin-right: 9px;
+            }
+        }
+
