@@ -101,6 +101,43 @@
             `;
         }
 
+        function renderRevenueBreakdown(rows) {
+            if (!rows || rows.length === 0) {
+                return '';
+            }
+
+            const grandTotal = rows.reduce((sum, row) => sum + Number(row.revenue || 0), 0);
+            const totalOrders = rows.reduce((sum, row) => sum + Number(row.orders || 0), 0);
+            const body = rows.map(row => `
+                <tr>
+                    <td>${escapeHTML(row.period || '-')}</td>
+                    <td>${Number(row.orders || 0)}</td>
+                    <td style="text-align: right;">${formatCurrency(Number(row.revenue || 0))}</td>
+                </tr>
+            `).join('');
+
+            return `
+                <div class="report-revenue-card" style="margin-top: 1.5rem;">
+                    <h3 style="margin-bottom: 0.8rem;">Penghasilan per Hari</h3>
+                    <div class="table-container">
+                        <table class="revenue-table">
+                            <thead>
+                                <tr><th>Tanggal</th><th>Pesanan</th><th style="text-align: right;">Penghasilan</th></tr>
+                            </thead>
+                            <tbody>${body}</tbody>
+                            <tfoot>
+                                <tr>
+                                    <td><strong>Total</strong></td>
+                                    <td><strong>${totalOrders}</strong></td>
+                                    <td style="text-align: right;"><strong>${formatCurrency(grandTotal)}</strong></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            `;
+        }
+
         async function generateCustomReport() {
             const startDate = document.getElementById('report-start-date').value;
             const endDate = document.getElementById('report-end-date').value;
@@ -141,6 +178,20 @@
                 }
             }
 
+            // Server-side revenue (daily breakdown + total) — more reliable than client aggregation.
+            let revenueRows = [];
+            let serverRevenueTotal = null;
+            if (apiAvailable && getAdminToken()) {
+                try {
+                    const revenue = await RestaurantAPI.getRevenue(getAdminToken(), startDate, endDate, 'day');
+                    revenueRows = revenue.rows || [];
+                    serverRevenueTotal = Number(revenue.total || 0);
+                } catch (error) {
+                    console.error('Gagal memuat penghasilan dari API:', error);
+                }
+            }
+            const displayRevenue = serverRevenueTotal !== null ? serverRevenueTotal : totalRevenue;
+
             const bestItem = itemStats[0];
 
             if (filteredOrders.length === 0) {
@@ -158,7 +209,7 @@
                         </div>
                         <div class="report-metric">
                             <span>Total Pendapatan</span>
-                            <strong>${formatCurrency(totalRevenue)}</strong>
+                            <strong>${formatCurrency(displayRevenue)}</strong>
                         </div>
                         <div class="report-metric">
                             <span>Status</span>
@@ -172,5 +223,6 @@
                         ${renderBestSellerPieChart(itemStats)}
                     </div>
                 </div>
+                ${renderRevenueBreakdown(revenueRows)}
             `;
         }

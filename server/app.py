@@ -1290,6 +1290,11 @@ class RestaurantHandler(BaseHTTPRequestHandler):
                 self.best_seller_report(query)
             return
 
+        if method == "GET" and path == "/api/reports/revenue":
+            if self.require_user("admin"):
+                self.revenue_report(query)
+            return
+
         if method == "GET" and path == "/api/audit-log":
             if self.require_user("admin"):
                 self.list_audit_log(query)
@@ -1889,6 +1894,51 @@ class RestaurantHandler(BaseHTTPRequestHandler):
             ).fetchall()
 
         self.json_response({"items": [row_to_dict(row) for row in rows]})
+
+    def revenue_report(self, query):
+        start = (query.get("start") or [""])[0]
+        end = (query.get("end") or [""])[0]
+        group = (query.get("group") or ["day"])[0]
+        # Period key is the ISO timestamp prefix: 10 chars = YYYY-MM-DD, 7 = YYYY-MM.
+        period_length = 7 if group == "month" else 10
+        group = "month" if group == "month" else "day"
+
+        filters = ["status != 'cancelled'"]
+        values = []
+        if start:
+            filters.append("date(timestamp) >= date(?)")
+            values.append(start)
+        if end:
+            filters.append("date(timestamp) <= date(?)")
+            values.append(end)
+
+        where_clause = " AND ".join(filters)
+        with connect_db() as db:
+            rows = db.execute(
+                f"""
+                SELECT substr(timestamp, 1, {period_length}) AS period,
+                       SUM(total) AS revenue,
+                       COUNT(*) AS orders
+                FROM orders
+                WHERE {where_clause}
+                GROUP BY period
+                ORDER BY period DESC
+                """,
+                values,
+            ).fetchall()
+
+        breakdown = []
+        total = 0
+        order_count = 0
+        for row in rows:
+            data = row_to_dict(row)
+            revenue = int(data.get("revenue") or 0)
+            orders = int(data.get("orders") or 0)
+            total += revenue
+            order_count += orders
+            breakdown.append({"period": data.get("period"), "revenue": revenue, "orders": orders})
+
+        self.json_response({"group": group, "total": total, "orderCount": order_count, "rows": breakdown})
 
     def list_audit_log(self, query):
         limit = parse_int((query.get("limit") or ["100"])[0]) or 100

@@ -249,6 +249,24 @@ test('admin mutations are recorded in the audit log', async ({ request }) => {
   expect(deleted.ok()).toBeTruthy();
 });
 
+test('admin revenue report returns server-computed totals', async ({ request }) => {
+  // Requires an admin token.
+  const unauthorized = await request.get('/api/reports/revenue');
+  expect(unauthorized.status()).toBe(401);
+
+  const token = await requestAdminToken(request);
+  const response = await request.get('/api/reports/revenue?group=day', {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  expect(response.ok()).toBeTruthy();
+
+  const payload = await response.json();
+  expect(payload.group).toBe('day');
+  expect(typeof payload.total).toBe('number');
+  expect(typeof payload.orderCount).toBe('number');
+  expect(Array.isArray(payload.rows)).toBeTruthy();
+});
+
 test('admin settings save to API-backed restaurant settings', async ({ page, request }) => {
   await loginAdmin(page);
 
