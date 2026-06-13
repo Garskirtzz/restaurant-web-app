@@ -820,7 +820,11 @@ def init_db():
 
         migrate_schema(db)
 
-        seed_user(db, ADMIN_USERNAME, ADMIN_PASSWORD, "Admin", "admin", force_password=ADMIN_PASSWORD_FROM_ENV)
+        # Seed the admin only when missing. We intentionally do NOT force the
+        # password from the env on every boot/migration, so an admin password
+        # set later (via SQL or rotation) is never silently overwritten by a
+        # deploy that bumps the schema.
+        seed_user(db, ADMIN_USERNAME, ADMIN_PASSWORD, "Admin", "admin")
 
         for customer in DEFAULT_CUSTOMERS:
             seed_user(
