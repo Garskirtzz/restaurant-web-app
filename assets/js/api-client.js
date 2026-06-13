@@ -188,11 +188,12 @@
             });
         },
 
-        getRevenue(token, start, end, group) {
+        getRevenue(token, start, end, group, brand) {
             const params = new URLSearchParams();
             if (start) params.set('start', start);
             if (end) params.set('end', end);
             if (group) params.set('group', group);
+            if (brand) params.set('brand', brand);
             return request(`/api/reports/revenue?${params.toString()}`, {
                 token
             });

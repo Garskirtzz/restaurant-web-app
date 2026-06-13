@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laporan Warkop</title>
+    <link rel="stylesheet" href="assets/css/admin.css">
+</head>
+
+<body class="state-login">
+    <!-- Login -->
+    <div id="login-page" class="login-container">
+        <div class="login-form">
+            <h1>Laporan Warkop</h1>
+            <p style="color: var(--text-muted); margin-bottom: 1.2rem;">
+                Masuk sebagai admin untuk melihat laporan penghasilan kedua brand.
+            </p>
+            <div class="form-group">
+                <label for="login-username">Username</label>
+                <input type="text" id="login-username" placeholder="Masukkan username admin">
+            </div>
+            <div class="form-group">
+                <label for="login-password">Password</label>
+                <input type="password" id="login-password" placeholder="Masukkan password admin">
+            </div>
+            <button class="login-btn" data-action="login">Masuk</button>
+            <div id="login-error" class="error-message" style="display: none;">Username atau password salah!</div>
+        </div>
+    </div>
+
+    <!-- Report -->
+    <div id="report-page" style="display: none;">
+        <header>
+            <div class="logo">Laporan Warkop</div>
+            <nav class="admin-nav">
+                <a href="#" data-action="refresh">Muat Ulang</a>
+                <a href="index.html">Menu</a>
+                <a href="#" data-action="logout">Logout</a>
+            </nav>
+        </header>
+
+        <main class="main-content" style="max-width: 1100px; margin: 0 auto; padding: 1.5rem;">
+            <div class="page-header">
+                <h1 class="page-title">Laporan Penghasilan</h1>
+            </div>
+            <p style="color: var(--text-muted); margin-bottom: 1.5rem;">
+                Ringkasan penghasilan harian &amp; bulanan untuk Warkop Kentjana dan Warkop Balap.
+            </p>
+            <div id="report-root"></div>
+        </main>
+    </div>
+
+    <script src="assets/js/shared-utils.js"></script>
+    <script src="assets/js/api-client.js"></script>
+    <script src="assets/js/laporan.js"></script>
+</body>
+
+</html>
