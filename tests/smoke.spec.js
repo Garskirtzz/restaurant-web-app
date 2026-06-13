@@ -267,6 +267,50 @@ test('admin revenue report returns server-computed totals', async ({ request }) 
   expect(Array.isArray(payload.rows)).toBeTruthy();
 });
 
+test('orders are brand-scoped and cross-brand status update is rejected', async ({ request }) => {
+  const adminToken = await requestAdminToken(request);
+
+  // Register a throwaway customer and place an order "at" Warkop Kentjana
+  // (brand is simulated via the X-Forwarded-Host header the server reads).
+  const username = `qa-brand-${Date.now()}`;
+  const register = await request.post('/api/auth/customer/register', {
+    data: { username, password: 'pw123456', name: 'QA Brand' }
+  });
+  expect(register.ok()).toBeTruthy();
+  const customerToken = (await register.json()).token;
+
+  const created = await request.post('/api/orders', {
+    headers: { Authorization: `Bearer ${customerToken}`, 'X-Forwarded-Host': 'warkop-kentjana.vercel.app' },
+    data: { tableNumber: '1', paymentMethod: 'cash', items: [{ name: 'Kopi', price: 10000, quantity: 2 }] }
+  });
+  expect(created.status()).toBe(201);
+  const order = (await created.json()).order;
+  expect(order.brand).toBe('kentjana');
+
+  // Balap admin must NOT be able to complete a Kentjana order.
+  const wrongBrand = await request.put(`/api/orders/${order.id}/status`, {
+    headers: { Authorization: `Bearer ${adminToken}`, 'X-Forwarded-Host': 'warkop-balap.vercel.app' },
+    data: { status: 'completed' }
+  });
+  expect(wrongBrand.status()).toBe(403);
+
+  // Kentjana admin can.
+  const rightBrand = await request.put(`/api/orders/${order.id}/status`, {
+    headers: { Authorization: `Bearer ${adminToken}`, 'X-Forwarded-Host': 'warkop-kentjana.vercel.app' },
+    data: { status: 'completed' }
+  });
+  expect(rightBrand.ok()).toBeTruthy();
+});
+
+test('revenue report is scoped by brand', async ({ request }) => {
+  const token = await requestAdminToken(request);
+  const response = await request.get('/api/reports/revenue?brand=balap&group=day', {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  expect(response.ok()).toBeTruthy();
+  expect((await response.json()).brand).toBe('balap');
+});
+
 test('admin settings save to API-backed restaurant settings', async ({ page, request }) => {
   await loginAdmin(page);
 

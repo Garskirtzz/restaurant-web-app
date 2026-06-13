@@ -72,7 +72,7 @@ SESSION_TTL_SECONDS = positive_int_env("RESTAURANT_SESSION_TTL_SECONDS", 60 * 60
 MAX_JSON_BODY_BYTES = positive_int_env("RESTAURANT_MAX_JSON_BODY_BYTES", 128 * 1024)
 ALLOWED_ORIGINS = csv_env("RESTAURANT_ALLOWED_ORIGINS", "*")
 APP_VERSION = os.environ.get("RESTAURANT_APP_VERSION", "local")
-SCHEMA_VERSION = 3
+SCHEMA_VERSION = 4
 DB_INITIALIZED = False
 DB_INIT_LOCK = threading.Lock()
 
@@ -196,6 +196,9 @@ DEFAULT_TABLES = [
 ]
 
 MENU_CATEGORIES = {"food", "drink", "dessert"}
+# Brand keys for the two storefronts that share one server/database. A request's
+# brand is derived from its domain (e.g. warkop-kentjana.vercel.app -> kentjana).
+KNOWN_BRANDS = ("kentjana", "balap")
 ORDER_STATUSES = {"pending", "processing", "completed", "cancelled"}
 PAYMENT_METHODS = {"cash", "qris", "bank-transfer"}
 MAX_ORDER_ITEMS = 50
@@ -289,6 +292,7 @@ CREATE TABLE IF NOT EXISTS orders (
     total INTEGER NOT NULL CHECK (total >= 0),
     status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'processing', 'completed', 'cancelled')),
     payment_method TEXT DEFAULT 'cash' CHECK (payment_method IN ('cash', 'qris', 'bank-transfer')),
+    brand TEXT DEFAULT '',
     timestamp TEXT NOT NULL,
     processed_at TEXT,
     completed_at TEXT
@@ -615,6 +619,7 @@ def create_integrity_indexes(db):
         CREATE INDEX IF NOT EXISTS idx_menu_items_category_available ON menu_items(category, available);
         CREATE INDEX IF NOT EXISTS idx_orders_customer_user_id_timestamp ON orders(customer_user_id, timestamp);
         CREATE INDEX IF NOT EXISTS idx_orders_status_timestamp ON orders(status, timestamp);
+        CREATE INDEX IF NOT EXISTS idx_orders_brand_timestamp ON orders(brand, timestamp);
         CREATE INDEX IF NOT EXISTS idx_order_items_order_id ON order_items(order_id);
         CREATE INDEX IF NOT EXISTS idx_admin_audit_log_created_at ON admin_audit_log(created_at);
         """
@@ -663,10 +668,12 @@ def migrate_schema(db):
         "UPDATE sessions SET expires_at = ? WHERE expires_at IS NULL OR expires_at = ''",
         (session_expiry(),),
     )
+    ensure_column(db, "orders", "brand", "TEXT DEFAULT ''")
     create_integrity_indexes(db)
     record_migration(db, 1, "bootstrap_schema")
     record_migration(db, 2, "session_expiry_and_integrity_indexes")
     record_migration(db, 3, "admin_audit_log")
+    record_migration(db, 4, "order_brand")
 
 
 def purge_expired_sessions(db):
@@ -773,6 +780,7 @@ def init_db():
                     total INTEGER NOT NULL,
                     status TEXT NOT NULL DEFAULT 'pending',
                     payment_method TEXT DEFAULT 'cash',
+                    brand TEXT DEFAULT '',
                     timestamp TEXT NOT NULL,
                     processed_at TEXT,
                     completed_at TEXT,
@@ -1097,6 +1105,30 @@ class RestaurantHandler(BaseHTTPRequestHandler):
             return forwarded.split(",")[0].strip()
 
         return self.client_address[0] if self.client_address else "unknown"
+
+    def request_brand(self, query=None, payload=None):
+        # Resolve which brand a request belongs to. Priority: explicit ?brand=
+        # (used by the owner report site), then the request host/domain, then a
+        # client-supplied hint. Returns "" when it cannot be determined (e.g.
+        # localhost), which callers treat as "all brands".
+        candidates = []
+        if query:
+            candidates.append((query.get("brand") or [""])[0])
+        candidates.append(self.headers.get("X-Forwarded-Host") or self.headers.get("Host") or "")
+        if isinstance(payload, dict):
+            candidates.append(payload.get("brand", ""))
+
+        for raw in candidates:
+            value = str(raw or "").strip().lower()
+            if not value:
+                continue
+            if value in KNOWN_BRANDS:
+                return value
+            for brand in KNOWN_BRANDS:
+                if brand in value:
+                    return brand
+
+        return ""
 
     def read_json(self):
         content_length = int(self.headers.get("Content-Length", "0") or 0)
@@ -1705,9 +1737,20 @@ class RestaurantHandler(BaseHTTPRequestHandler):
         self.json_response({"deleted": deleted})
 
     def list_orders(self, user):
+        brand = self.request_brand()
         with connect_db() as db:
             if user["role"] == "admin":
-                order_rows = db.execute("SELECT * FROM orders ORDER BY timestamp DESC").fetchall()
+                if brand:
+                    order_rows = db.execute(
+                        "SELECT * FROM orders WHERE brand = ? ORDER BY timestamp DESC", (brand,)
+                    ).fetchall()
+                else:
+                    order_rows = db.execute("SELECT * FROM orders ORDER BY timestamp DESC").fetchall()
+            elif brand:
+                order_rows = db.execute(
+                    "SELECT * FROM orders WHERE customer_user_id = ? AND brand = ? ORDER BY timestamp DESC",
+                    (user["id"], brand),
+                ).fetchall()
             else:
                 order_rows = db.execute(
                     "SELECT * FROM orders WHERE customer_user_id = ? ORDER BY timestamp DESC",
@@ -1787,6 +1830,7 @@ class RestaurantHandler(BaseHTTPRequestHandler):
             "total": total,
             "status": "pending",
             "payment_method": payment_method,
+            "brand": self.request_brand(payload=payload),
             "timestamp": timestamp,
         }
 
@@ -1805,9 +1849,9 @@ class RestaurantHandler(BaseHTTPRequestHandler):
                 """
                 INSERT INTO orders (
                     id, order_number, customer_user_id, customer_username, customer_name,
-                    table_number, total, status, payment_method, timestamp
+                    table_number, total, status, payment_method, brand, timestamp
                 )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     order["id"],
@@ -1819,6 +1863,7 @@ class RestaurantHandler(BaseHTTPRequestHandler):
                     order["total"],
                     order["status"],
                     order["payment_method"],
+                    order["brand"],
                     order["timestamp"],
                 ),
             )
@@ -1851,24 +1896,35 @@ class RestaurantHandler(BaseHTTPRequestHandler):
         values = list(fields.values())
         values.append(order_id)
 
+        brand = self.request_brand()
         with connect_db() as db:
+            existing = db.execute("SELECT brand FROM orders WHERE id = ?", (order_id,)).fetchone()
+            if not existing:
+                self.json_response({"error": "Pesanan tidak ditemukan"}, 404)
+                return
+
+            order_brand = (row_to_dict(existing).get("brand") or "")
+            # An admin on one brand's domain must not change another brand's order.
+            if brand and order_brand and order_brand != brand:
+                self.json_response({"error": "Pesanan ini milik brand lain"}, 403)
+                return
+
             db.execute(f"UPDATE orders SET {assignments} WHERE id = ?", values)
             order = db.execute("SELECT * FROM orders WHERE id = ?", (order_id,)).fetchone()
-            if order:
-                self.record_audit(db, "order.status", "order", order_id, status)
-
-        if not order:
-            self.json_response({"error": "Pesanan tidak ditemukan"}, 404)
-            return
+            self.record_audit(db, "order.status", "order", order_id, status)
 
         self.json_response({"order": row_to_dict(order)})
 
     def best_seller_report(self, query):
         start = (query.get("start") or [""])[0]
         end = (query.get("end") or [""])[0]
+        brand = self.request_brand(query=query)
         filters = ["orders.status != 'cancelled'"]
         values = []
 
+        if brand:
+            filters.append("orders.brand = ?")
+            values.append(brand)
         if start:
             filters.append("date(orders.timestamp) >= date(?)")
             values.append(start)
@@ -1902,9 +1958,13 @@ class RestaurantHandler(BaseHTTPRequestHandler):
         # Period key is the ISO timestamp prefix: 10 chars = YYYY-MM-DD, 7 = YYYY-MM.
         period_length = 7 if group == "month" else 10
         group = "month" if group == "month" else "day"
+        brand = self.request_brand(query=query)
 
         filters = ["status != 'cancelled'"]
         values = []
+        if brand:
+            filters.append("brand = ?")
+            values.append(brand)
         if start:
             filters.append("date(timestamp) >= date(?)")
             values.append(start)
@@ -1938,7 +1998,7 @@ class RestaurantHandler(BaseHTTPRequestHandler):
             order_count += orders
             breakdown.append({"period": data.get("period"), "revenue": revenue, "orders": orders})
 
-        self.json_response({"group": group, "total": total, "orderCount": order_count, "rows": breakdown})
+        self.json_response({"group": group, "brand": brand, "total": total, "orderCount": order_count, "rows": breakdown})
 
     def list_audit_log(self, query):
         limit = parse_int((query.get("limit") or ["100"])[0]) or 100
