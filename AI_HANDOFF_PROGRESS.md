@@ -13,32 +13,22 @@ Do not put production secrets, database passwords, Vercel tokens, Supabase servi
 - Backend: Python HTTP API in `server/app.py`, exposed on Vercel through `api/index.py`.
 - Local database: SQLite when no Postgres env vars are configured.
 - Production database: Supabase Postgres, schema `restaurant_app`.
-- Production URL: `https://project-hqcx7.vercel.app`.
+- Production URLs (one Vercel project `project-hqcx7`, all live):
+  `https://warkop-kentjana.vercel.app`, `https://warkop-balap.vercel.app`,
+  `https://warkop-laporan.vercel.app` (owner report site). `project-hqcx7.vercel.app` also works.
 - Git remote: `https://github.com/Garskirtzz/restaurant-web-app.git`.
 - Current branch: `main`.
-- Latest known commit: `8e88361 Add responsive layout QA coverage`.
+- Production schema version: **4** (orders have a `brand` column). `/api/health` returns
+  `schemaVersion: 4`, `database: postgres:restaurant_app`, `storageMode: persistent`.
+- Admin login: username `admin`, password lives only in the DB (not auto-seeded from env
+  anymore). Reset/rotate via `OPERATIONS.md` section 2B.
 - Current Git status after latest work: only `.codex/` is untracked and should not be committed.
-
-Production health was last verified with:
-
-```json
-{
-  "ok": true,
-  "appVersion": "production",
-  "schemaVersion": 2,
-  "database": "postgres:restaurant_app",
-  "storageMode": "persistent",
-  "users": 3
-}
-```
-
-Note: local schema is now v3 (admin audit log). Production still reports
-`schemaVersion: 2` until this code is deployed; after deploy it should report 3.
 
 ## Important Files
 
 - `index.html`: public customer menu page.
 - `admin.html`: login, admin dashboard, customer/admin panels.
+- `laporan.html` + `assets/js/laporan.js`: owner report site (both brands' daily/monthly revenue); served at `warkop-laporan.vercel.app`.
 - `assets/css/index.css`: public page styling.
 - `assets/css/admin.css`: admin page styling.
 - `assets/js/index.js`: public page state, auth modal, cart, checkout, history.
@@ -181,8 +171,10 @@ Completed:
   - Table CRUD
   - Orders
   - Order status updates
-  - Best-seller report
+  - Best-seller report (brand-scoped)
+  - Revenue report (`GET /api/reports/revenue?group=day|month&brand=`) — server-computed daily/monthly totals
   - Admin audit log (`GET /api/audit-log`)
+- Orders and reports are brand-scoped via `request_brand()` (host/`?brand=`); see the Deployment Target section.
 - Added API-backed authentication and sessions.
 - Added password hashing with PBKDF2 SHA-256.
 - Added payload validation and oversized JSON rejection.
@@ -245,32 +237,37 @@ Supabase migrations currently recorded:
 20260603150341 revoke_public_rls_auto_enable_execute
 20260603150407 revoke_public_rls_auto_enable_public_execute
 20260603213640 enable_restaurant_app_rls
+(2026-06)     enable_admin_audit_log_rls
+(2026-06)     create_revenue_report_views
+(2026-06)     update_revenue_views_per_brand
 ```
 
-Current app tables:
+App schema_migrations (in `restaurant_app.schema_migrations`): v1 bootstrap, v2 session
+expiry + indexes, v3 admin_audit_log, v4 orders `brand` column.
+
+Current app tables (RLS enabled on all):
 
 ```text
-restaurant_app.users                  RLS on, 3 rows
-restaurant_app.sessions               RLS on, 0 rows
-restaurant_app.menu_items             RLS on, 9 rows
-restaurant_app.restaurant_tables      RLS on, 8 rows
-restaurant_app.restaurant_settings    RLS on, 1 row
-restaurant_app.orders                 RLS on, 0 rows
-restaurant_app.order_items            RLS on, 0 rows
-restaurant_app.schema_migrations      RLS on, 2 rows
-restaurant_app.admin_audit_log        created on deploy of schema v3
+restaurant_app.users                users + admin (shared across brands)
+restaurant_app.sessions
+restaurant_app.menu_items           shared across brands
+restaurant_app.restaurant_tables    shared across brands
+restaurant_app.restaurant_settings
+restaurant_app.orders               has `brand` column (per-brand)
+restaurant_app.order_items
+restaurant_app.schema_migrations
+restaurant_app.admin_audit_log      RLS enabled (migration enable_admin_audit_log_rls)
 ```
 
-Security advisor note:
-- Supabase advisor reports `RLS Enabled No Policy` at INFO level.
-- This is expected in the current backend-only design.
-- Do not add broad policies for `anon` or `authenticated` unless the frontend is changed to use Supabase client directly.
+Views: `restaurant_app.laporan_harian`, `restaurant_app.laporan_bulanan` (per-brand revenue;
+not exposed via PostgREST, only read in SQL/Table Editor).
 
-REQUIRED Supabase follow-up after deploying schema v3:
-- The `admin_audit_log` table is created by the app bootstrap, so it will NOT have RLS enabled automatically like the tables enabled via earlier Supabase migrations.
-- Schema-level grants for `anon`/`authenticated`/`public` are already revoked, so the table is not reachable by browser clients, but enable RLS for consistency and to satisfy the advisor:
-  - `ALTER TABLE restaurant_app.admin_audit_log ENABLE ROW LEVEL SECURITY;`
-- Record it as a Supabase migration (e.g., `enable_admin_audit_log_rls`). Supabase MCP was not connected in the session that added this feature, so this step is still pending.
+Security advisor note:
+- Supabase advisor reports `RLS Enabled No Policy` at INFO level for all app tables.
+- This is expected in the current backend-only design (the app connects as the owner role,
+  which bypasses RLS; anon/authenticated grants are revoked).
+- Do not add broad policies for `anon` or `authenticated` unless the frontend is changed to use Supabase client directly.
+- `admin_audit_log` RLS is now ENABLED (done 2026-06-13), so the earlier critical advisory is resolved.
 
 ### 8. Security Hardening
 
@@ -306,8 +303,10 @@ Security caveats:
 - Rate limiting/lockout state is in-memory and per-process, so on Vercel it is best-effort per warm instance, not shared across scaled instances. A shared store (DB/Redis) is needed for strict guarantees.
 - No formal password reset flow yet.
 
-Deploy note for schema v3:
-- `SCHEMA_VERSION` was bumped from 2 to 3. On the next production deploy, `postgres_bootstrap_ready` sees the old version and re-runs the idempotent bootstrap, which creates `admin_audit_log` and re-runs `seed_user`. Because seeding uses `force_password=ADMIN_PASSWORD_FROM_ENV`, the admin password will be re-applied from `RESTAURANT_ADMIN_PASSWORD` if that env var is set. Keep that env var in sync with the intended admin password before deploying (see OPERATIONS.md section 2).
+Schema migrations / admin password (updated 2026-06-13):
+- `SCHEMA_VERSION` is now **4** (v3 = `admin_audit_log`, v4 = orders `brand` column). A schema bump makes `postgres_bootstrap_ready` re-run the idempotent bootstrap (creates new tables/columns).
+- Seeding NO LONGER force-resets the admin password. `seed_user` for admin now only inserts when the admin is absent; an existing admin password is never overwritten by a deploy. (Previously `force_password=ADMIN_PASSWORD_FROM_ENV` reset it on every schema bump, which locked out login — fixed.)
+- Therefore the admin password lives in the DB only. Set/rotate it via `OPERATIONS.md` section 2B (generate a PBKDF2 hash and UPDATE the row). `RESTAURANT_ADMIN_PASSWORD` now only matters for a brand-new/empty database.
 
 ### 9. Testing and QA
 
@@ -330,8 +329,12 @@ Completed:
 
 ```text
 npm test
-12 passed
+20 passed
 ```
+
+Newer Playwright coverage also includes: strict CSP / no inline handlers, delegated
+buttons, lockout 429, audit log, revenue report (brand-scoped), and cross-brand order
+status rejection (403).
 
 Production end-to-end QA completed:
 - Temporary customer registered.
@@ -374,25 +377,39 @@ Current status note:
 
 ## Remaining Work
 
-### Deployment Target: Two Brands, One Server (Shared Data)
+### Deployment Target: Two Brands, One Server (Per-Brand Orders/Reports) — DONE (2026-06-13)
 
-The intended deployment is two brands — **Warkop Kentjana** and **Warkop Balap** —
-on two different domains, sharing one Vercel project, API, Supabase database,
-menu, orders, and admin. Status:
+Two brands — **Warkop Kentjana** and **Warkop Balap** — live on one Vercel project
+`project-hqcx7`, one API, one Supabase database. **Users, menu, and tables are shared;
+orders and reports are per-brand.** Three live domains (all `.vercel.app`):
 
-- Done: per-domain branding (`assets/js/brand-config.js` + `applyBranding`/`resolveBrand`)
-  resolves the brand by exact `byHost`, then substring `matchers` (already set for
-  `kentjana` and `balap`), then `DEFAULT`. So branding works automatically on any
-  domain containing the brand word; unknown hosts (localhost/tests) keep the default.
-  CORS already supports multiple origins via comma-separated `RESTAURANT_ALLOWED_ORIGINS`.
-  See `DEPLOYMENT.md` > "Dua Brand, Satu Server".
-- Done: both domains are LIVE on the one Vercel project `project-hqcx7`:
-  `warkop-kentjana.vercel.app` and `warkop-balap.vercel.app` (both return `/api/health` ok).
-  Exact entries are set in `brand-config.js` `byHost`. CORS is not required because each
-  brand calls its own same-origin `/api`.
-- Pending: the per-brand visual only appears AFTER the current local commits are deployed
-  (production is still schema v2 / old code). Deploy was intentionally deferred by the owner.
-- Not multi-tenant: data is shared between the two brands by design.
+```text
+warkop-kentjana.vercel.app   storefront + admin, brand=kentjana
+warkop-balap.vercel.app      storefront + admin, brand=balap
+warkop-laporan.vercel.app    owner report site (redirects "/" -> /laporan.html)
+```
+
+How brand is determined:
+- Frontend display: `assets/js/brand-config.js` + `applyBranding`/`resolveBrand` (exact
+  `byHost`, then substring `matchers` for `kentjana`/`balap`, then `DEFAULT`).
+- Backend data: `RestaurantHandler.request_brand()` resolves brand from an explicit
+  `?brand=` query (used by the report site), else the request Host header, else a payload
+  hint. Orders are tagged with `brand` (schema v4); admin order lists, customer history,
+  best-seller and revenue reports are filtered by brand; `update_order_status` rejects
+  changing another brand's order (403) — this fixed the cross-brand completion bug.
+
+Owner report site:
+- `laporan.html` + `assets/js/laporan.js`: admin-login page showing daily & monthly
+  revenue for BOTH brands (calls `/api/reports/revenue?brand=...`). `vercel.json` has a
+  host-scoped redirect so `warkop-laporan.vercel.app/` lands on `laporan.html`.
+- Supabase views `restaurant_app.laporan_harian` / `laporan_bulanan` now include a
+  `brand` column (migration `update_revenue_views_per_brand`).
+
+Notes:
+- `RESTAURANT_ALLOWED_ORIGINS` is not required for brand domains because each brand calls
+  its own same-origin `/api`. The report site uses explicit `?brand=` so it is host-agnostic.
+- Admin password is NOT re-seeded on deploy anymore (see Priority 4); set/rotate it via SQL
+  per `OPERATIONS.md`. Current admin password lives only in the DB.
 
 ### Priority 1: Final Branding and Real Restaurant Content
 
@@ -567,4 +584,7 @@ When making changes, keep the Grey Aesthetic from ui-architecture.md, maintain r
 
 ## Best Next Step
 
-`OPERATIONS.md` is done (Priority 3). The next best step is Priority 1 (final branding and real restaurant content), which needs owner decisions, or Priority 4 (production hardening: rate limiting, login lockout, admin audit log, tighten CSP), which can be done in code without owner input.
+Core features are live (two brands, per-brand orders/reports, owner report site, hardening,
+audit log, revenue reports). The main remaining owner-decision item is Priority 1 (real menu
+content/images for each brand). Optional code work: remove inline `style=` to drop
+`style-src 'unsafe-inline'`, add export/charts to the report site, or per-brand admin theming.
