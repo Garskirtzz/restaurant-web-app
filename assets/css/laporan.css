@@ -1,0 +1,166 @@
+/* Owner report site — tabs + animated bar charts (CSP-safe, no external libs) */
+
+.report-intro {
+    color: var(--text-muted);
+    margin-bottom: 1.4rem;
+}
+
+.report-tabs {
+    display: inline-flex;
+    gap: 4px;
+    padding: 4px;
+    margin-bottom: 1.6rem;
+    background: var(--surface-grey, #e9ecef);
+    border: 1px solid var(--border-grey, #dee2e6);
+    border-radius: 999px;
+}
+
+.report-tab {
+    min-width: 120px;
+    min-height: 40px;
+    padding: 8px 22px;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--text-muted, #6c757d);
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.25s ease;
+}
+
+.report-tab:hover {
+    color: var(--text-dark, #212529);
+}
+
+.report-tab.active {
+    background: var(--text-dark, #212529);
+    color: #fff;
+    border-color: var(--text-dark, #212529);
+}
+
+.chart-card {
+    background: var(--bg-card, #fff);
+    border: 1px solid var(--border-grey, #dee2e6);
+    border-radius: 16px;
+    padding: 1.6rem 1.4rem 1.2rem;
+    margin-bottom: 1.4rem;
+}
+
+.chart-card h3 {
+    margin: 0 0 0.4rem;
+}
+
+.chart-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 18px;
+    margin-bottom: 1.2rem;
+    font-size: 0.9rem;
+    color: var(--text-dark, #212529);
+}
+
+.chart-legend span {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.legend-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 4px;
+    display: inline-block;
+}
+
+.chart {
+    display: flex;
+    align-items: flex-end;
+    gap: 20px;
+    min-height: 220px;
+    padding: 8px 2px 0;
+    overflow-x: auto;
+}
+
+.chart-col {
+    display: flex;
+    flex: 0 0 auto;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.chart-bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 6px;
+    height: 200px;
+}
+
+.bar {
+    width: 26px;
+    border-radius: 7px 7px 0 0;
+    transform-origin: bottom;
+    animation: growBar 0.7s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+
+.bar-kentjana {
+    background: var(--text-dark, #212529);
+}
+
+.bar-balap {
+    background: var(--accent, #f45656);
+}
+
+@keyframes growBar {
+    from {
+        transform: scaleY(0);
+    }
+    to {
+        transform: scaleY(1);
+    }
+}
+
+.chart-xlabel {
+    font-size: 0.74rem;
+    color: var(--text-muted, #6c757d);
+    white-space: nowrap;
+}
+
+.report-empty {
+    color: var(--text-muted, #6c757d);
+    padding: 2rem 0;
+    text-align: center;
+}
+
+.report-table-wrap {
+    overflow-x: auto;
+}
+
+.report-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.report-table th,
+.report-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border-grey, #dee2e6);
+    text-align: left;
+    font-size: 0.92rem;
+}
+
+.report-table th:not(:first-child),
+.report-table td:not(:first-child) {
+    text-align: right;
+}
+
+.report-table tfoot td {
+    font-weight: 800;
+    border-top: 2px solid var(--border-grey, #dee2e6);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .bar {
+        animation-duration: 0.01ms;
+    }
+}

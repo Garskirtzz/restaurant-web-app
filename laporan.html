@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Laporan Warkop</title>
     <link rel="stylesheet" href="assets/css/admin.css">
+    <link rel="stylesheet" href="assets/css/laporan.css">
 </head>
 
 <body class="state-login">
@@ -44,10 +45,14 @@
             <div class="page-header">
                 <h1 class="page-title">Laporan Penghasilan</h1>
             </div>
-            <p style="color: var(--text-muted); margin-bottom: 1.5rem;">
-                Ringkasan penghasilan harian &amp; bulanan untuk Warkop Kentjana dan Warkop Balap.
-            </p>
-            <div id="report-root"></div>
+            <p class="report-intro">Perbandingan penghasilan Warkop Kentjana &amp; Warkop Balap.</p>
+
+            <div class="report-tabs" role="tablist">
+                <button type="button" class="report-tab active" data-action="tab" data-tab="harian">Harian</button>
+                <button type="button" class="report-tab" data-action="tab" data-tab="bulanan">Bulanan</button>
+            </div>
+
+            <div id="report-content"></div>
         </main>
     </div>
 
