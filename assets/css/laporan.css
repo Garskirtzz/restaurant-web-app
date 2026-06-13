@@ -104,11 +104,11 @@
 }
 
 .bar-kentjana {
-    background: var(--text-dark, #212529);
+    background: #212529;
 }
 
 .bar-balap {
-    background: var(--accent, #f45656);
+    background: #f45656;
 }
 
 @keyframes growBar {
