@@ -7,12 +7,15 @@
       "excludeFiles": "{node_modules/**,tests/**,test-results/**,playwright-report/**,server/*.db,.codex/**}"
     }
   },
-  "rewrites": [
+  "redirects": [
     {
       "source": "/",
       "has": [{ "type": "host", "value": "warkop-laporan.vercel.app" }],
-      "destination": "/laporan.html"
-    },
+      "destination": "/laporan.html",
+      "permanent": false
+    }
+  ],
+  "rewrites": [
     {
       "source": "/api/:path*",
       "destination": "/api/index.py?path=:path*"
